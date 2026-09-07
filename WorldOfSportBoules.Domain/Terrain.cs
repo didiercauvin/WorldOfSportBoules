@@ -7,21 +7,11 @@ public sealed record TerrainZone(
 
 public sealed class Terrain
 {
-    public IReadOnlyList<TerrainZone> Zones { get; }
+    public double Width { get; } = 3.5;
 
-    public Terrain()
-    {
-        Zones =
-        [
-            new TerrainZone(
-                "Zone de jeu",
-                0,
-                5),
+    public double LigneDesBut { get; } = 12.5;
 
-            new TerrainZone(
-                "Zone des 2 mètres",
-                5,
-                7)
-        ];
-    }
+    public double FinZoneDesCinqMetres { get; } = 17.5;
+
+    public double LigneDesPied { get; } = 19.5;
 }

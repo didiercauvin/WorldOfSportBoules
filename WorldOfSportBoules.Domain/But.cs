@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace WorldOfSportBoules.Domain;
 
-public sealed class Jack
+public sealed class But
 {
     public Position Position { get; private set; }
 
-    public Jack(Position position)
+    public But(Position position)
     {
         Position = position;
     }
