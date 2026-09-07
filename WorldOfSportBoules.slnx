@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="WorldOfSportBoules.ConsoleApp/WorldOfSportBoules.ConsoleApp.csproj" />
+  <Project Path="WorldOfSportBoules.Domain/WorldOfSportBoules.Domain.csproj" />
+</Solution>
