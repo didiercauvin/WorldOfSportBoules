@@ -1,4 +1,4 @@
-﻿namespace WorldOfSportBoules.Engine;
+﻿namespace WorldOfSportBoules.Application.Rencontre.Engine;
 
 public interface IRandomGenerator
 {

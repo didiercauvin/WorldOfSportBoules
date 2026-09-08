@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using WorldOfSportBoules.Domain;
-using Match = WorldOfSportBoules.Domain.Match;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
 
 namespace WorldOfSportBoules.ApplicationTests;
 

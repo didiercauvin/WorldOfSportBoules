@@ -1,7 +1,6 @@
-﻿using System.Numerics;
-using WorldOfSportBoules.Domain;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
 
-namespace WorldOfSportBoules.Engine;
+namespace WorldOfSportBoules.Application.Rencontre.Engine;
 
 public sealed class ButEngine
 {

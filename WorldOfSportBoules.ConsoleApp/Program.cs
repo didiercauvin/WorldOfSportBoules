@@ -1,6 +1,6 @@
-﻿using WorldOfSportBoules.ConsoleApp;
-using WorldOfSportBoules.Domain;
-using WorldOfSportBoules.Engine;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
+using WorldOfSportBoules.Application.Rencontre.Engine;
+using WorldOfSportBoules.ConsoleApp;
 
 var terrain = new Terrain();
 
@@ -27,8 +27,7 @@ Console.WriteLine();
 Console.Write(
     "Distance souhaitée (12,5 à 19,5 m) : ");
 
-var y = double.Parse(
-    Console.ReadLine()!);
+var y = double.Parse(Console.ReadLine()!);
 
 Console.Write(
     "Position latérale souhaitée (0 à 3,5 m) : ");

@@ -2,7 +2,4 @@
   <Project Path="WorldOfSportBoules.Application/WorldOfSportBoules.Application.csproj" Id="fa7d096d-aa63-46d5-ad78-55daedba7957" />
   <Project Path="WorldOfSportBoules.ApplicationTests/WorldOfSportBoules.ApplicationTests.csproj" Id="6736cdfb-1caf-4b75-b6dc-cc473bdcf08a" />
   <Project Path="WorldOfSportBoules.ConsoleApp/WorldOfSportBoules.ConsoleApp.csproj" />
-  <Project Path="WorldOfSportBoules.Domain/WorldOfSportBoules.Domain.csproj" />
-  <Project Path="WorldOfSportBoules.Engine/WorldOfSportBoules.Engine.csproj" Id="b8fa95d5-82f3-4cc4-af49-d399a8b02587" />
-  <Project Path="WorldOfSportBoules.EngineTests/WorldOfSportBoules.EngineTests.csproj" Id="9eec9299-8364-4ba2-9383-9fa9a5b58138" />
 </Solution>

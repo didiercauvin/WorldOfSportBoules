@@ -4,14 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WorldOfSportBoules.Domain;
+namespace WorldOfSportBoules.Application.Rencontre.Domain;
 
-public sealed class But
+public sealed class Ball
 {
+    public Guid Id { get; } = Guid.NewGuid();
+
+    public string PlayerName { get; }
+
     public Position Position { get; private set; }
 
-    public But(Position position)
+    public Ball(string playerName, Position position)
     {
+        PlayerName = playerName;
         Position = position;
     }
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WorldOfSportBoules.Domain;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
 
 namespace WorldOfSportBoules.ConsoleApp;
 
@@ -108,7 +103,7 @@ public sealed class ConsoleTerrainRenderer
             but.Position.Y,
             terrain);
 
-        grid[row, column] = '●';
+        grid[row, column] = 'o';
     }
 
     private static int PositionToColumn(

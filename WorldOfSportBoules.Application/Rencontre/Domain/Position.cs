@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WorldOfSportBoules.Domain;
+namespace WorldOfSportBoules.Application.Rencontre.Domain;
 
 public readonly record struct Position(double X, double Y)
 {

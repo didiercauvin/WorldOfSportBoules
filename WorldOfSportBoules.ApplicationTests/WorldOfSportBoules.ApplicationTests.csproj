@@ -12,8 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WorldOfSportBoules.Domain\WorldOfSportBoules.Domain.csproj" />
-    <ProjectReference Include="..\WorldOfSportBoules.Engine\WorldOfSportBoules.Engine.csproj" />
+    <ProjectReference Include="..\WorldOfSportBoules.Application\WorldOfSportBoules.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

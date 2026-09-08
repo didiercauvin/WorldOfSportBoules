@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WorldOfSportBoules.Domain;
+namespace WorldOfSportBoules.Application.Rencontre.Domain;
 
 public sealed class Player
 {

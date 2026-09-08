@@ -1,4 +1,4 @@
-﻿namespace WorldOfSportBoules.Domain;
+﻿namespace WorldOfSportBoules.Application.Rencontre.Domain;
 
 public sealed record TerrainZone(
     string Name,

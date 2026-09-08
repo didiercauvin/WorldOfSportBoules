@@ -1,5 +1,5 @@
-﻿using WorldOfSportBoules.Domain;
-using WorldOfSportBoules.Engine;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
+using WorldOfSportBoules.Application.Rencontre.Engine;
 
 namespace WorldOfSportBoules.ApplicationTests;
 

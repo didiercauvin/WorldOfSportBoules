@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WorldOfSportBoules.Domain;
+﻿using WorldOfSportBoules.Application.Rencontre.Domain;
 
-namespace WorldOfSportBoules.Engine;
+namespace WorldOfSportBoules.Application.Rencontre.Engine;
 
 public sealed class MatchEngine
 {
