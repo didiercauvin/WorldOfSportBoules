@@ -5,6 +5,7 @@ using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailab
 using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Competitions;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players;
+using WorldOfSportBoules.ConsoleApp;
 using WorldOfSportBoules.ConsoleApp.CareerScreens;
 
 var competitionProvider = new InMemoryCompetitionProvider();
@@ -27,13 +28,17 @@ var createCareerHandler =
 
 var createCareerScreen =
     new CreateCareerScreen(
-        createCareerHandler,
+        createCareerHandler);
+
+var manageTeamScreen =
+    new ManageTeamScreen(
         getAvailablePlayersHandler);
 
 var careerScreen =
     new CareerScreen(
         getAvailableCompetitionsHandler,
-        prepareSeasonHandler);
+        prepareSeasonHandler,
+        manageTeamScreen);
 
 while (true)
 {

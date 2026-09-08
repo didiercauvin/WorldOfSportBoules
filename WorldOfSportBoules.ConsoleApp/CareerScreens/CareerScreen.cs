@@ -13,34 +13,41 @@ namespace WorldOfSportBoules.ConsoleApp.CareerScreens;
 
 public sealed class CareerScreen
 {
+    private string _currentScreen = "Ma saison";
+
     private readonly GetAvailableCompetitionsHandler
         _getAvailableCompetitionsHandler;
+
+    private readonly ManageTeamScreen _manageTeamScreen;
 
     private readonly PrepareSeasonHandler
         _prepareSeasonHandler;
 
     public CareerScreen(
         GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
-        PrepareSeasonHandler prepareSeasonHandler)
+        PrepareSeasonHandler prepareSeasonHandler,
+        ManageTeamScreen manageTeamScreen)
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
 
         _prepareSeasonHandler =
             prepareSeasonHandler;
+
+        _manageTeamScreen = manageTeamScreen;
     }
 
     public void Run(Career career)
     {
         var menuItems = new[]
         {
-            "Ma saison",
-            "Mon équipe",
-            "Préparer la saison",
-            "Budget",
-            "Recrutement",
-            "Quitter"
-        };
+        "Ma saison",
+        "Mon équipe",
+        "Préparer la saison",
+        "Budget",
+        "Recrutement",
+        "Quitter"
+    };
 
         var selectedMenuIndex = 0;
 
@@ -53,6 +60,31 @@ public sealed class CareerScreen
 
             var key = System.Console.ReadKey(true);
 
+            // Navigation spécifique à l'écran "Mon équipe"
+            if (_currentScreen == "Mon équipe")
+            {
+                switch (key.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        _manageTeamScreen.MoveUp();
+                        continue;
+
+                    case ConsoleKey.DownArrow:
+                        _manageTeamScreen.MoveDown();
+                        continue;
+
+                    case ConsoleKey.Spacebar:
+                        _manageTeamScreen.ToggleSelectedPlayer(career);
+                        continue;
+
+                    case ConsoleKey.Enter:
+                    case ConsoleKey.Escape:
+                        _currentScreen = "Ma saison";
+                        continue;
+                }
+            }
+
+            // Navigation du menu principal
             switch (key.Key)
             {
                 case ConsoleKey.UpArrow:
@@ -157,7 +189,7 @@ public sealed class CareerScreen
                 CreateSeasonContent(career),
 
             "Mon équipe" =>
-                CreateTeamContent(career),
+                _manageTeamScreen.Render(career),
 
             "Préparer la saison" =>
                 CreatePrepareSeasonContent(career),
@@ -179,8 +211,8 @@ public sealed class CareerScreen
     }
 
     private void HandleMenuSelection(
-        Career career,
-        string selectedItem)
+    Career career,
+    string selectedItem)
     {
         switch (selectedItem)
         {
@@ -188,10 +220,13 @@ public sealed class CareerScreen
                 PrepareSeason(career);
                 break;
 
-            case "Ma saison":
+            case "Mon équipe":
+                _currentScreen = "Mon équipe";
+                _manageTeamScreen.Initialize(career);
                 break;
 
-            case "Mon équipe":
+            case "Ma saison":
+                _currentScreen = "Ma saison";
                 break;
 
             case "Budget":

@@ -46,4 +46,18 @@ public sealed class Team
 
         _players.Add(player);
     }
+
+    public void RemovePlayer(Guid playerId)
+    {
+        var player = _players.FirstOrDefault(
+            x => x.Id == playerId);
+
+        if (player is null)
+        {
+            throw new InvalidOperationException(
+                "Ce joueur ne fait pas partie de l'équipe.");
+        }
+
+        _players.Remove(player);
+    }
 }
