@@ -15,6 +15,7 @@ public sealed class CompetitionDefinition
     public string Location { get; }
 
     public int DistanceKm { get; }
+    public CompetitionRound? FirstRound { get; }
 
     public CompetitionType Type { get; }
     public CompetitionFormat Format { get; }
@@ -30,7 +31,8 @@ public sealed class CompetitionDefinition
         CompetitionType type,
         CompetitionFormat format,
         CompetitionTeamFormat teamFormat,
-        CompetitionCategory category)
+        CompetitionCategory category,
+        CompetitionRound firstRound)
     {
         Id = id;
         Name = name;
@@ -40,6 +42,7 @@ public sealed class CompetitionDefinition
         Format = format;
         TeamFormat = teamFormat;
         Category = category;
+        FirstRound = firstRound;
     }
 }
 

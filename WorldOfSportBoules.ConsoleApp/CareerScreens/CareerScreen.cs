@@ -19,6 +19,8 @@ public sealed class CareerScreen
         _getAvailableCompetitionsHandler;
 
     private readonly ManageTeamScreen _manageTeamScreen;
+    private readonly PrepareSeasonScreen _prepareSeasonScreen;
+    private readonly SelectCompetitionScreen _selectCompetitionScreen;
 
     private readonly PrepareSeasonHandler
         _prepareSeasonHandler;
@@ -26,7 +28,9 @@ public sealed class CareerScreen
     public CareerScreen(
         GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
         PrepareSeasonHandler prepareSeasonHandler,
-        ManageTeamScreen manageTeamScreen)
+        ManageTeamScreen manageTeamScreen,
+        PrepareSeasonScreen prepareSeasonScreen,
+        SelectCompetitionScreen selectCompetitionScreen)
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
@@ -35,19 +39,27 @@ public sealed class CareerScreen
             prepareSeasonHandler;
 
         _manageTeamScreen = manageTeamScreen;
+        _prepareSeasonScreen = prepareSeasonScreen;
+        _selectCompetitionScreen = selectCompetitionScreen;
     }
 
     public void Run(Career career)
     {
+        var seasonYear = DateTime.Now.Year;
+
+        _prepareSeasonScreen.Initialize(seasonYear);
+        _manageTeamScreen.Initialize(career);
+
         var menuItems = new[]
         {
-        "Ma saison",
-        "Mon équipe",
-        "Préparer la saison",
-        "Budget",
-        "Recrutement",
-        "Quitter"
-    };
+            "Ma saison",
+            "Mon équipe",
+            "Préparer la saison",
+            "Concours",
+            "Budget",
+            "Recrutement",
+            "Quitter"
+        };
 
         var selectedMenuIndex = 0;
 
@@ -59,6 +71,85 @@ public sealed class CareerScreen
                 selectedMenuIndex);
 
             var key = System.Console.ReadKey(true);
+
+            if (_currentScreen == "Préparer la saison")
+            {
+                switch (key.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        _prepareSeasonScreen.MoveUp();
+                        continue;
+
+                    case ConsoleKey.DownArrow:
+                        _prepareSeasonScreen.MoveDown();
+                        continue;
+
+                    case ConsoleKey.Spacebar:
+                        _prepareSeasonScreen.ToggleSelectedCompetition();
+                        continue;
+
+                    case ConsoleKey.Enter:
+                        {
+                            var competitionIds =
+                                _prepareSeasonScreen
+                                    .GetSelectedCompetitionIds();
+
+                            if (competitionIds.Count == 0)
+                            {
+                                continue;
+                            }
+
+                            _prepareSeasonHandler.Handle(
+                                new PrepareSeasonCommand(
+                                    seasonYear,
+                                    competitionIds),
+                                career);
+
+                            _currentScreen = "Ma saison";
+
+                            continue;
+                        }
+
+                    case ConsoleKey.Escape:
+                        _currentScreen = "Ma saison";
+                        continue;
+                }
+            }
+
+            if (_currentScreen == "Concours")
+            {
+                switch (key.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        _selectCompetitionScreen.MoveUp(career);
+                        break;
+
+                    case ConsoleKey.DownArrow:
+                        _selectCompetitionScreen.MoveDown(career);
+                        break;
+
+                    case ConsoleKey.Enter:
+                        {
+                            var competition =
+                                _selectCompetitionScreen
+                                    .GetSelectedCompetition(career);
+
+                            if (competition is not null)
+                            {
+                                // Prochaine étape :
+                                // créer la CompetitionParticipation
+                            }
+
+                            break;
+                        }
+
+                    case ConsoleKey.Escape:
+                        _currentScreen = "Ma saison";
+                        break;
+                }
+
+                continue;
+            }
 
             // Navigation spécifique à l'écran "Mon équipe"
             if (_currentScreen == "Mon équipe")
@@ -192,7 +283,11 @@ public sealed class CareerScreen
                 _manageTeamScreen.Render(career),
 
             "Préparer la saison" =>
-                CreatePrepareSeasonContent(career),
+                _prepareSeasonScreen.Render(
+                    DateTime.Now.Year),
+
+            "Concours" =>
+                _selectCompetitionScreen.Render(career),
 
             "Budget" =>
                 CreateComingSoonContent("Budget"),
@@ -217,7 +312,10 @@ public sealed class CareerScreen
         switch (selectedItem)
         {
             case "Préparer la saison":
-                PrepareSeason(career);
+                var seasonYear = DateTime.Now.Year;
+
+                _prepareSeasonScreen.Initialize(seasonYear);
+                _currentScreen = "Préparer la saison";
                 break;
 
             case "Mon équipe":
@@ -229,194 +327,17 @@ public sealed class CareerScreen
                 _currentScreen = "Ma saison";
                 break;
 
+            case "Concours":
+                _selectCompetitionScreen.Initialize(career);
+                _currentScreen = "Concours";
+                break;
+
             case "Budget":
                 break;
 
             case "Recrutement":
                 break;
         }
-    }
-
-    private void PrepareSeason(Career career)
-    {
-        var seasonYear = DateTime.Now.Year;
-
-        var competitions =
-            _getAvailableCompetitionsHandler.Handle(
-                new GetAvailableCompetitionsQuery(
-                    seasonYear));
-
-        var selected = SelectCompetitions(
-            competitions,
-            seasonYear);
-
-        if (selected is null)
-        {
-            return;
-        }
-
-        var command = new PrepareSeasonCommand(
-            seasonYear,
-            selected
-                .Select(x => x.Id)
-                .ToList());
-
-        _prepareSeasonHandler.Handle(
-            command,
-            career);
-    }
-
-    private static IReadOnlyList<ScheduledCompetition>?
-        SelectCompetitions(
-            IReadOnlyList<ScheduledCompetition> competitions,
-            int seasonYear)
-    {
-        if (competitions.Count == 0)
-        {
-            AnsiConsole.Clear();
-
-            AnsiConsole.MarkupLine(
-                "[yellow]Aucun concours disponible.[/]");
-
-            System.Console.ReadKey(true);
-
-            return null;
-        }
-
-        var selected = new HashSet<Guid>();
-        var index = 0;
-
-        while (true)
-        {
-            var layout = new Layout("Root")
-                .SplitColumns(
-                    new Layout("Menu")
-                        .Size(28),
-                    new Layout("Content"));
-
-            layout["Menu"].Update(
-                new Panel(
-                    new Markup(
-                        "[bold]Préparation de la saison[/]\n\n" +
-                        "[grey]↑ ↓[/] Déplacer\n" +
-                        "[grey]Espace[/] Sélectionner\n" +
-                        "[grey]Entrée[/] Valider\n" +
-                        "[grey]Échap[/] Annuler"))
-                {
-                    Header = new PanelHeader("[bold]Navigation[/]"),
-                    Border = BoxBorder.Rounded
-                });
-
-            layout["Content"].Update(
-                CreateCompetitionSelectionContent(
-                    competitions,
-                    seasonYear,
-                    selected,
-                    index));
-
-            AnsiConsole.Clear();
-            AnsiConsole.Write(layout);
-
-            var key = System.Console.ReadKey(true);
-
-            switch (key.Key)
-            {
-                case ConsoleKey.UpArrow:
-                    index = Math.Max(0, index - 1);
-                    break;
-
-                case ConsoleKey.DownArrow:
-                    index = Math.Min(
-                        competitions.Count - 1,
-                        index + 1);
-                    break;
-
-                case ConsoleKey.Spacebar:
-                    {
-                        var competition = competitions[index];
-
-                        if (!selected.Add(competition.Id))
-                        {
-                            selected.Remove(competition.Id);
-                        }
-
-                        break;
-                    }
-
-                case ConsoleKey.Enter:
-                    return competitions
-                        .Where(x => selected.Contains(x.Id))
-                        .ToList();
-
-                case ConsoleKey.Escape:
-                    return null;
-            }
-        }
-    }
-
-    private static Panel CreateCompetitionSelectionContent(
-        IReadOnlyList<ScheduledCompetition> competitions,
-        int seasonYear,
-        HashSet<Guid> selected,
-        int index)
-    {
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .AddColumn("")
-            .AddColumn("")
-            .AddColumn("Date")
-            .AddColumn("Concours")
-            .AddColumn("Lieu")
-            .AddColumn("Format")
-            .AddColumn("Engagement");
-
-        for (var i = 0; i < competitions.Count; i++)
-        {
-            var competition = competitions[i];
-
-            var cursor = i == index
-                ? "[bold]❯[/]"
-                : "";
-
-            var checkbox = selected.Contains(competition.Id)
-                ? "[green][[x]][/]"
-                : "[[ ]]";
-
-            var name = i == index
-                ? $"[bold]{competition.Definition.Name}[/]"
-                : competition.Definition.Name;
-
-            table.AddRow(
-                cursor,
-                checkbox,
-                competition.StartDate.ToString("dd/MM/yyyy"),
-                name,
-                competition.Definition.Location,
-                competition.Definition.TeamFormat.ToString(),
-                competition.EntryFee.ToString("C"));
-        }
-
-        var content = new Rows(
-            new Markup(
-                $"[bold]Saison {seasonYear}-{seasonYear + 1}[/]\n\n" +
-                "Sélectionnez les concours auxquels " +
-                "vous souhaitez participer.\n\n" +
-                "[grey]↑ ↓ : déplacer   " +
-                "Espace : sélectionner   " +
-                "Entrée : valider   " +
-                "Échap : annuler[/]\n"),
-            table,
-            new Markup(
-                $"\n[bold]{selected.Count}[/] " +
-                "concours sélectionné(s)")
-        );
-
-        return new Panel(content)
-        {
-            Header = new PanelHeader(
-                "[bold]Calendrier[/]"),
-            Border = BoxBorder.Rounded
-        };
     }
 
     private static Panel CreateSeasonContent(
@@ -458,30 +379,6 @@ public sealed class CareerScreen
             new Markup(string.Join("\n", lines)));
     }
 
-    private static Panel CreateTeamContent(
-        Career career)
-    {
-        var lines = new List<string>
-        {
-            $"[bold]{career.Team.Name}[/]",
-            "",
-            $"Catégorie : [bold]{career.Team.Category}[/]",
-            "",
-            "[bold]Effectif[/]",
-            ""
-        };
-
-        foreach (var player in career.Team.Players)
-        {
-            lines.Add(
-                $"• {player.FullName} " +
-                $"[grey]({player.Category})[/]");
-        }
-
-        return new Panel(
-            new Markup(string.Join("\n", lines)));
-    }
-
     private static Panel CreateComingSoonContent(
         string title)
     {
@@ -489,23 +386,5 @@ public sealed class CareerScreen
             new Markup(
                 $"[bold]{title}[/]\n\n" +
                 "[grey]Cet écran sera implémenté prochainement.[/]"));
-    }
-
-    private static Panel CreatePrepareSeasonContent(
-    Career career)
-    {
-        var seasonYear = DateTime.Now.Year;
-
-        var content = new Markup(
-            $"[bold]Préparer la saison {seasonYear}-{seasonYear + 1}[/]\n\n" +
-            "Construisez votre calendrier en sélectionnant " +
-            "les concours auxquels vous souhaitez participer.\n\n" +
-            "[grey]Appuyez sur Entrée pour commencer.[/]");
-
-        return new Panel(content)
-        {
-            Header = new PanelHeader("[bold]Préparation[/]"),
-            Border = BoxBorder.Rounded
-        };
     }
 }

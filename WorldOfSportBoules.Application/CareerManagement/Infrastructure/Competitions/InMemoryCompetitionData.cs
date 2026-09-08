@@ -14,7 +14,8 @@ internal static class InMemoryCompetitionData
             CompetitionType.Loisir, 
             CompetitionFormat.Poules,
             CompetitionTeamFormat.Quadrette,
-            CompetitionCategory.M3M4),
+            CompetitionCategory.M3M4,
+            CompetitionRound.TrenteDeuxiemeDeFinale),
 
         new(
             Guid.Parse("22222222-2222-2222-2222-222222222222"),
@@ -24,7 +25,8 @@ internal static class InMemoryCompetitionData
             CompetitionType.Loisir,
             CompetitionFormat.EliminationDirecte,
             CompetitionTeamFormat.Quadrette,
-            CompetitionCategory.M3M4),
+            CompetitionCategory.M3M4,
+            CompetitionRound.TrenteDeuxiemeDeFinale),
 
         new(
             Guid.Parse("33333333-3333-3333-3333-333333333333"),
@@ -34,7 +36,8 @@ internal static class InMemoryCompetitionData
             CompetitionType.Promotion,
             CompetitionFormat.EliminationDirecte,
             CompetitionTeamFormat.Quadrette,
-            CompetitionCategory.M3M4),
+            CompetitionCategory.M3M4,
+            CompetitionRound.TrenteDeuxiemeDeFinale),
 
         new(
             Guid.Parse("44444444-4444-4444-4444-444444444444"),
@@ -44,7 +47,8 @@ internal static class InMemoryCompetitionData
             CompetitionType.Promotion,
             CompetitionFormat.Poules,
             CompetitionTeamFormat.Quadrette,
-            CompetitionCategory.M3M4),
+            CompetitionCategory.M3M4,
+            CompetitionRound.TrenteDeuxiemeDeFinale),
 
         new(
             Guid.Parse("55555555-5555-5555-5555-555555555555"),
@@ -54,7 +58,8 @@ internal static class InMemoryCompetitionData
             CompetitionType.Promotion,
             CompetitionFormat.EliminationDirecte,
             CompetitionTeamFormat.Quadrette,
-            CompetitionCategory.M2)
+            CompetitionCategory.M2,
+            CompetitionRound.TrenteDeuxiemeDeFinale)
     ];
 
     public static IReadOnlyList<CompetitionEditionData> Editions =>

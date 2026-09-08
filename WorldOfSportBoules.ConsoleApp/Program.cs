@@ -26,6 +26,10 @@ var prepareSeasonHandler =
 var createCareerHandler =
     new CreateCareerHandler();
 
+var prepareSeasonScreen =
+    new PrepareSeasonScreen(
+        getAvailableCompetitionsHandler);
+
 var createCareerScreen =
     new CreateCareerScreen(
         createCareerHandler);
@@ -34,11 +38,15 @@ var manageTeamScreen =
     new ManageTeamScreen(
         getAvailablePlayersHandler);
 
+var selectCompetitionScreen = new SelectCompetitionScreen();
+
 var careerScreen =
     new CareerScreen(
         getAvailableCompetitionsHandler,
         prepareSeasonHandler,
-        manageTeamScreen);
+        manageTeamScreen,
+        prepareSeasonScreen,
+        selectCompetitionScreen);
 
 while (true)
 {

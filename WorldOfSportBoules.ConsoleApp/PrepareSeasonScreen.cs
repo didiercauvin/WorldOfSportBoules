@@ -17,53 +17,131 @@ public sealed class PrepareSeasonScreen
     private readonly GetAvailableCompetitionsHandler
         _getAvailableCompetitionsHandler;
 
-    private readonly PrepareSeasonHandler
-        _prepareSeasonHandler;
-
-    private readonly CompetitionSelectionView
-        _competitionSelectionView;
+    private IReadOnlyList<ScheduledCompetition> _competitions = [];
+    private readonly HashSet<Guid> _selectedCompetitions = [];
+    private int _selectedIndex;
 
     public PrepareSeasonScreen(
-        GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
-        PrepareSeasonHandler prepareSeasonHandler,
-        CompetitionSelectionView competitionSelectionView)
+        GetAvailableCompetitionsHandler getAvailableCompetitionsHandler)
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
-
-        _prepareSeasonHandler =
-            prepareSeasonHandler;
-
-        _competitionSelectionView =
-            competitionSelectionView;
     }
 
-    public Season? Run(
-        Career career,
-        int seasonYear)
+    public void Initialize(int seasonYear)
     {
-        var availableCompetitions =
+        _competitions =
             _getAvailableCompetitionsHandler.Handle(
-                new GetAvailableCompetitionsQuery(seasonYear));
+                new GetAvailableCompetitionsQuery(
+                    seasonYear));
 
-        var selectedCompetitions =
-            _competitionSelectionView.Run(
-                availableCompetitions,
-                seasonYear);
+        _selectedCompetitions.Clear();
+        _selectedIndex = 0;
+    }
 
-        if (selectedCompetitions is null)
+    public Panel Render(int seasonYear)
+    {
+        if (_competitions.Count == 0)
         {
-            return null;
+            return new Panel(
+                new Markup(
+                    "[yellow]Aucun concours disponible " +
+                    "pour cette saison.[/]"));
         }
 
-        var command = new PrepareSeasonCommand(
-            seasonYear,
-            selectedCompetitions
-                .Select(x => x.Id)
-                .ToList());
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("")
+            .AddColumn("")
+            .AddColumn("Date")
+            .AddColumn("Concours")
+            .AddColumn("Lieu")
+            .AddColumn("Format")
+            .AddColumn("Engagement");
 
-        return _prepareSeasonHandler.Handle(
-            command,
-            career);
+        for (var i = 0; i < _competitions.Count; i++)
+        {
+            var competition = _competitions[i];
+
+            var cursor = i == _selectedIndex
+                ? "[bold]❯[/]"
+                : "";
+
+            var checkbox = _selectedCompetitions.Contains(
+                competition.Id)
+                ? "[green][[x]][/]"
+                : "[[ ]]";
+
+            var name = i == _selectedIndex
+                ? $"[bold]{competition.Definition.Name}[/]"
+                : competition.Definition.Name;
+
+            table.AddRow(
+                cursor,
+                checkbox,
+                competition.StartDate.ToString("dd/MM/yyyy"),
+                name,
+                competition.Definition.Location,
+                competition.Definition.TeamFormat.ToString(),
+                competition.EntryFee.ToString("C"));
+        }
+
+        var content = new Rows(
+            new Markup(
+                $"[bold]Saison {seasonYear}-{seasonYear + 1}[/]\n\n" +
+                "Sélectionnez les concours auxquels " +
+                "vous souhaitez participer.\n"),
+            table,
+            new Markup(
+                $"\n[bold]{_selectedCompetitions.Count}[/] " +
+                "concours sélectionné(s)\n\n" +
+                "[grey]↑ ↓ : déplacer   " +
+                "Espace : sélectionner   " +
+                "Entrée : valider   " +
+                "Échap : annuler[/]"));
+
+        return new Panel(content)
+        {
+            Header = new PanelHeader("[bold]Calendrier[/]"),
+            Border = BoxBorder.Rounded
+        };
+    }
+
+    public void MoveUp()
+    {
+        if (_competitions.Count == 0)
+            return;
+
+        _selectedIndex = Math.Max(
+            0,
+            _selectedIndex - 1);
+    }
+
+    public void MoveDown()
+    {
+        if (_competitions.Count == 0)
+            return;
+
+        _selectedIndex = Math.Min(
+            _competitions.Count - 1,
+            _selectedIndex + 1);
+    }
+
+    public void ToggleSelectedCompetition()
+    {
+        if (_competitions.Count == 0)
+            return;
+
+        var competition = _competitions[_selectedIndex];
+
+        if (!_selectedCompetitions.Add(competition.Id))
+        {
+            _selectedCompetitions.Remove(competition.Id);
+        }
+    }
+
+    public IReadOnlyList<Guid> GetSelectedCompetitionIds()
+    {
+        return _selectedCompetitions.ToList();
     }
 }
