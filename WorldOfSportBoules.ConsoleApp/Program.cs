@@ -3,34 +3,37 @@ using WorldOfSportBoules.Application.CareerManagement.Application.CreatingCareer
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailableCompetitions;
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailablePlayers;
 using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
-using WorldOfSportBoules.Application.CareerManagement.Infrastructure;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Competitions;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players;
-using WorldOfSportBoules.ConsoleApp;
 using WorldOfSportBoules.ConsoleApp.CareerScreens;
 
 var competitionProvider = new InMemoryCompetitionProvider();
 var playerProvider = new InMemoryPlayerProvider();
 
 var getAvailablePlayersHandler =
-    new GetAvailablePlayersHandler(playerProvider);
+    new GetAvailablePlayersHandler(
+        playerProvider);
 
 var getAvailableCompetitionsHandler =
-    new GetAvailableCompetitionsHandler(competitionProvider);
+    new GetAvailableCompetitionsHandler(
+        competitionProvider);
 
 var prepareSeasonHandler =
-    new PrepareSeasonHandler(competitionProvider);
-
-var prepareSeasonScreen =
-    new PrepareSeasonScreen(
-        getAvailableCompetitionsHandler,
-        prepareSeasonHandler);
+    new PrepareSeasonHandler(
+        competitionProvider);
 
 var createCareerHandler =
     new CreateCareerHandler();
 
 var createCareerScreen =
-    new CreateCareerScreen(createCareerHandler, getAvailablePlayersHandler);
+    new CreateCareerScreen(
+        createCareerHandler,
+        getAvailablePlayersHandler);
+
+var careerScreen =
+    new CareerScreen(
+        getAvailableCompetitionsHandler,
+        prepareSeasonHandler);
 
 while (true)
 {
@@ -49,12 +52,7 @@ while (true)
             {
                 var career = createCareerScreen.Run();
 
-                // Pour l'instant :
-                var seasonYear = DateTime.Now.Year;
-
-                prepareSeasonScreen.Run(
-                    career,
-                    seasonYear);
+                careerScreen.Run(career);
 
                 break;
             }

@@ -31,6 +31,19 @@ public sealed class Team
     {
         ArgumentNullException.ThrowIfNull(player);
 
+        if (Category == TeamCategory.M4 &&
+            player.Category is not (PlayerCategory.M3 or PlayerCategory.M4))
+        {
+            throw new InvalidOperationException(
+                $"Un joueur {player.Category} ne peut pas intégrer une équipe M4.");
+        }
+
+        if (_players.Any(x => x.Id == player.Id))
+        {
+            throw new InvalidOperationException(
+                "Ce joueur est déjà dans l'équipe.");
+        }
+
         _players.Add(player);
     }
 }

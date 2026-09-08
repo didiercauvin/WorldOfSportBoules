@@ -9,7 +9,6 @@ namespace WorldOfSportBoules.Application.CareerManagement.Application.PreparingS
 
 public sealed record PrepareSeasonCommand(
     int SeasonYear,
-    IReadOnlyList<Guid> PlayerIds,
     IReadOnlyList<Guid> CompetitionIds);
 
 
@@ -41,29 +40,14 @@ public sealed class PrepareSeasonHandler
                 "Un ou plusieurs concours sélectionnés ne sont pas disponibles pour cette saison.");
         }
 
-        var selectedPlayers =
-            career.Team.Players
-                .Where(x => command.PlayerIds.Contains(x.Id))
-                .ToList();
-
-        if (selectedPlayers.Count != command.PlayerIds.Count)
-        {
-            throw new InvalidOperationException(
-                "Un ou plusieurs joueurs sélectionnés ne font pas partie de l'effectif.");
-        }
-
-        if (selectedPlayers.Count != 4)
-        {
-            throw new InvalidOperationException(
-                "Une équipe M4 doit être composée de 4 joueurs.");
-        }
-
         var season = new Season(command.SeasonYear);
 
         foreach (var competition in selectedCompetitions)
         {
             season.RegisterForCompetition(competition);
         }
+
+        career.SetCurrentSeason(season);
 
         return season;
     }

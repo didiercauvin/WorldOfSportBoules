@@ -12,6 +12,8 @@ public sealed class Career
     public string ManagerName { get; }
     public Team Team { get; }
 
+    public Season? CurrentSeason { get; private set; }
+
     public Career(
         Guid id,
         string managerName,
@@ -20,5 +22,12 @@ public sealed class Career
         Id = id;
         ManagerName = managerName;
         Team = team;
+    }
+
+    public void SetCurrentSeason(Season season)
+    {
+        ArgumentNullException.ThrowIfNull(season);
+
+        CurrentSeason = season;
     }
 }

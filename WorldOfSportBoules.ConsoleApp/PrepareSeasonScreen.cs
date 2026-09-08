@@ -14,96 +14,56 @@ namespace WorldOfSportBoules.ConsoleApp;
 
 public sealed class PrepareSeasonScreen
 {
-    private readonly GetAvailableCompetitionsHandler _getAvailableCompetitionsHandler;
-    private readonly PrepareSeasonHandler _prepareSeasonHandler;
+    private readonly GetAvailableCompetitionsHandler
+        _getAvailableCompetitionsHandler;
+
+    private readonly PrepareSeasonHandler
+        _prepareSeasonHandler;
+
+    private readonly CompetitionSelectionView
+        _competitionSelectionView;
 
     public PrepareSeasonScreen(
         GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
-        PrepareSeasonHandler prepareSeasonHandler)
+        PrepareSeasonHandler prepareSeasonHandler,
+        CompetitionSelectionView competitionSelectionView)
     {
-        _getAvailableCompetitionsHandler = getAvailableCompetitionsHandler;
-        _prepareSeasonHandler = prepareSeasonHandler;
+        _getAvailableCompetitionsHandler =
+            getAvailableCompetitionsHandler;
+
+        _prepareSeasonHandler =
+            prepareSeasonHandler;
+
+        _competitionSelectionView =
+            competitionSelectionView;
     }
 
-    public Season Run(
+    public Season? Run(
         Career career,
-        int seasonYear)
-    {
-        AnsiConsole.Clear();
-
-        var competitions = SelectCompetitions(seasonYear);
-
-        AnsiConsole.Clear();
-
-        var command = new PrepareSeasonCommand(
-            seasonYear,
-            career.Team.Players.Select(x => x.Id).ToList(),
-            competitions.Select(x => x.Id).ToList());
-
-        var season = _prepareSeasonHandler.Handle(
-            command,
-            career);
-
-        DisplaySummary(career, season);
-
-        AnsiConsole.Prompt(
-            new TextPrompt<string>(
-                "\nAppuyez sur [grey]Entrée[/] pour continuer.")
-                .AllowEmpty());
-
-        return season;
-    }
-
-    private IReadOnlyList<ScheduledCompetition> SelectCompetitions(
         int seasonYear)
     {
         var availableCompetitions =
             _getAvailableCompetitionsHandler.Handle(
                 new GetAvailableCompetitionsQuery(seasonYear));
 
-        return AnsiConsole.Prompt(
-            new MultiSelectionPrompt<ScheduledCompetition>()
-                .Title(
-                    $"[bold]Sélectionnez les concours de la saison {seasonYear}-{seasonYear + 1}[/]")
-                .InstructionsText(
-                    "[grey](Espace pour sélectionner, Entrée pour valider)[/]")
-                .PageSize(10)
-                .AddChoices(availableCompetitions)
-                .UseConverter(competition =>
-                    $"{competition.Definition.Name} " +
-                    $"[grey]({competition.StartDate:dd/MM/yyyy} · " +
-                    $"{competition.Definition.Location} · " +
-                    $"{competition.EntryFee:C})[/]"));
-    }
+        var selectedCompetitions =
+            _competitionSelectionView.Run(
+                availableCompetitions,
+                seasonYear);
 
-    private static void DisplaySummary(
-        Career career,
-        Season season)
-    {
-        AnsiConsole.Write(
-            new Rule("[bold]Préparation de la saison[/]"));
-
-        AnsiConsole.MarkupLine(
-            $"\n[bold]Équipe :[/] {career.Team.Name}");
-
-        AnsiConsole.MarkupLine(
-            $"[bold]Catégorie :[/] {career.Team.Category}");
-
-        AnsiConsole.MarkupLine("\n[bold]Joueurs :[/]");
-
-        foreach (var player in career.Team.Players)
+        if (selectedCompetitions is null)
         {
-            AnsiConsole.MarkupLine(
-                $"  • {player.FullName} [grey]({player.Category})[/]");
+            return null;
         }
 
-        AnsiConsole.MarkupLine("\n[bold]Concours :[/]");
+        var command = new PrepareSeasonCommand(
+            seasonYear,
+            selectedCompetitions
+                .Select(x => x.Id)
+                .ToList());
 
-        foreach (var competition in season.Competitions)
-        {
-            AnsiConsole.MarkupLine(
-                $"  • {competition.Definition.Name} " +
-                $"[grey]({competition.StartDate:dd/MM/yyyy})[/]");
-        }
+        return _prepareSeasonHandler.Handle(
+            command,
+            career);
     }
 }
