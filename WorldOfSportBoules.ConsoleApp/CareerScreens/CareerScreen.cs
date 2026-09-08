@@ -22,6 +22,9 @@ public sealed class CareerScreen
     private readonly PrepareSeasonScreen _prepareSeasonScreen;
     private readonly SelectCompetitionScreen _selectCompetitionScreen;
 
+    private readonly TournamentScreen _tournamentScreen;
+    private CompetitionParticipation? _currentParticipation;
+
     private readonly PrepareSeasonHandler
         _prepareSeasonHandler;
 
@@ -30,7 +33,8 @@ public sealed class CareerScreen
         PrepareSeasonHandler prepareSeasonHandler,
         ManageTeamScreen manageTeamScreen,
         PrepareSeasonScreen prepareSeasonScreen,
-        SelectCompetitionScreen selectCompetitionScreen)
+        SelectCompetitionScreen selectCompetitionScreen,
+        TournamentScreen tournamentScreen)
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
@@ -41,6 +45,7 @@ public sealed class CareerScreen
         _manageTeamScreen = manageTeamScreen;
         _prepareSeasonScreen = prepareSeasonScreen;
         _selectCompetitionScreen = selectCompetitionScreen;
+        _tournamentScreen = tournamentScreen;
     }
 
     public void Run(Career career)
@@ -71,6 +76,7 @@ public sealed class CareerScreen
                 selectedMenuIndex);
 
             var key = System.Console.ReadKey(true);
+
 
             if (_currentScreen == "Préparer la saison")
             {
@@ -106,7 +112,6 @@ public sealed class CareerScreen
                                 career);
 
                             _currentScreen = "Ma saison";
-
                             continue;
                         }
 
@@ -145,6 +150,24 @@ public sealed class CareerScreen
 
                     case ConsoleKey.Escape:
                         _currentScreen = "Ma saison";
+                        break;
+                }
+
+                continue;
+            }
+
+            if (_currentScreen == "Tournoi")
+            {
+                switch (key.Key)
+                {
+                    case ConsoleKey.Enter:
+                        // Pour l'instant, rien.
+                        // La prochaine étape ouvrira la simulation
+                        // du tour sélectionné.
+                        break;
+
+                    case ConsoleKey.Escape:
+                        _currentScreen = "Concours";
                         break;
                 }
 
@@ -288,6 +311,12 @@ public sealed class CareerScreen
 
             "Concours" =>
                 _selectCompetitionScreen.Render(career),
+
+            "Tournoi" =>
+                _currentParticipation is null
+                    ? CreateComingSoonContent("Aucun tournoi.")
+                    : _tournamentScreen.Render(
+                        _currentParticipation),
 
             "Budget" =>
                 CreateComingSoonContent("Budget"),

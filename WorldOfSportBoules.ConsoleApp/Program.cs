@@ -39,6 +39,7 @@ var manageTeamScreen =
         getAvailablePlayersHandler);
 
 var selectCompetitionScreen = new SelectCompetitionScreen();
+var tournamentScreen = new TournamentScreen();
 
 var careerScreen =
     new CareerScreen(
@@ -46,7 +47,8 @@ var careerScreen =
         prepareSeasonHandler,
         manageTeamScreen,
         prepareSeasonScreen,
-        selectCompetitionScreen);
+        selectCompetitionScreen,
+        tournamentScreen);
 
 while (true)
 {

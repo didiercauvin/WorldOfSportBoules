@@ -10,6 +10,11 @@ public sealed class Season
 {
     private readonly List<ScheduledCompetition> _competitions = [];
 
+    private readonly List<CompetitionParticipation> _participations = [];
+
+    public IReadOnlyList<CompetitionParticipation> Participations =>
+        _participations;
+
     public int Year { get; }
 
     public DateOnly StartDate { get; }
@@ -53,5 +58,33 @@ public sealed class Season
         }
 
         _competitions.Add(competition);
+    }
+
+    public CompetitionParticipation StartCompetition(
+    ScheduledCompetition competition)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+
+        if (!_competitions.Any(x => x.Id == competition.Id))
+        {
+            throw new InvalidOperationException(
+                "L'équipe n'est pas inscrite à ce concours.");
+        }
+
+        var existingParticipation = _participations
+            .FirstOrDefault(x =>
+                x.Competition.Id == competition.Id);
+
+        if (existingParticipation is not null)
+        {
+            return existingParticipation;
+        }
+
+        var participation = new CompetitionParticipation(
+            competition);
+
+        _participations.Add(participation);
+
+        return participation;
     }
 }
