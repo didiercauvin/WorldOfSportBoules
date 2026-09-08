@@ -1,56 +1,65 @@
-﻿using WorldOfSportBoules.Application.Rencontre.Domain;
-using WorldOfSportBoules.Application.Rencontre.Engine;
+﻿using Spectre.Console;
+using WorldOfSportBoules.Application.CareerManagement.Application.CreatingCareer;
+using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailableCompetitions;
+using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailablePlayers;
+using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
+using WorldOfSportBoules.Application.CareerManagement.Infrastructure;
+using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Competitions;
+using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players;
 using WorldOfSportBoules.ConsoleApp;
+using WorldOfSportBoules.ConsoleApp.CareerScreens;
 
-var terrain = new Terrain();
+var competitionProvider = new InMemoryCompetitionProvider();
+var playerProvider = new InMemoryPlayerProvider();
 
-var pierre = new Player(
-    Guid.NewGuid(),
-    "Pierre");
+var getAvailablePlayersHandler =
+    new GetAvailablePlayersHandler(playerProvider);
 
-var match = new Match([pierre]);
+var getAvailableCompetitionsHandler =
+    new GetAvailableCompetitionsHandler(competitionProvider);
 
-var engine = new MatchEngine(
-    new ButEngine());
+var prepareSeasonHandler =
+    new PrepareSeasonHandler(competitionProvider);
 
-var renderer = new ConsoleTerrainRenderer();
+var prepareSeasonScreen =
+    new PrepareSeasonScreen(
+        getAvailableCompetitionsHandler,
+        prepareSeasonHandler);
 
-Console.Clear();
+var createCareerHandler =
+    new CreateCareerHandler();
 
-Console.WriteLine(
-    renderer.Render(terrain, match));
+var createCareerScreen =
+    new CreateCareerScreen(createCareerHandler, getAvailablePlayersHandler);
 
-Console.WriteLine();
-Console.WriteLine("LANCER DU BUT");
-Console.WriteLine();
+while (true)
+{
+    AnsiConsole.Clear();
 
-Console.Write(
-    "Distance souhaitée (12,5 à 19,5 m) : ");
+    var choice = AnsiConsole.Prompt(
+        new SelectionPrompt<string>()
+            .Title("[bold]Sport Boules Manager[/]")
+            .AddChoices(
+                "Nouvelle carrière",
+                "Quitter"));
 
-var y = double.Parse(Console.ReadLine()!);
+    switch (choice)
+    {
+        case "Nouvelle carrière":
+            {
+                var career = createCareerScreen.Run();
 
-Console.Write(
-    "Position latérale souhaitée (0 à 3,5 m) : ");
+                // Pour l'instant :
+                var seasonYear = DateTime.Now.Year;
 
-var x = double.Parse(
-    Console.ReadLine()!);
+                prepareSeasonScreen.Run(
+                    career,
+                    seasonYear);
 
-var cible = new Position(x, y);
+                break;
+            }
 
-engine.LancerLeBut(
-    match,
-    "Pierre",
-    cible);
-
-Console.Clear();
-
-Console.WriteLine(
-    renderer.Render(terrain, match));
-
-Console.WriteLine();
-
-Console.WriteLine(
-    $"But : X={match.But!.Position.X:F2} m, " +
-    $"Y={match.But.Position.Y:F2} m");
-
-Console.ReadKey();
+        case "Quitter":
+            return;
+    }
+}

@@ -11,14 +11,14 @@ public sealed class PositionDuButTests
     {
         var match = ScenarioBuilder
         .UnePartie()
-        .AvecUnJoueur("Pierre")
+        .AvecUnJoueur("Pierre", "Tchernia")
         .Build();
 
         var engine = new MatchEngine(new ButEngine());
 
         var cible = new Position(1.2, 15.5);
 
-        engine.LancerLeBut(match, "Pierre", cible);
+        engine.LancerLeBut(match, "Pierre Tchernia", cible);
 
         Assert.AreEqual(cible, match.But!.Position);
     }

@@ -1,4 +1,5 @@
-﻿using WorldOfSportBoules.Application.Rencontre.Domain;
+﻿using WorldOfSportBoules.Application._Shared.Domain;
+using WorldOfSportBoules.Application.Rencontre.Domain;
 
 namespace WorldOfSportBoules.ApplicationTests;
 
@@ -11,11 +12,13 @@ public sealed class ScenarioBuilder
         return new ScenarioBuilder();
     }
 
-    public ScenarioBuilder AvecUnJoueur(string name)
+    public ScenarioBuilder AvecUnJoueur(string firstname, string lastname)
     {
         var player = new Player(
             Guid.NewGuid(),
-            name);
+            firstname,
+            lastname,
+            PlayerCategory.M4);
 
         _players.Add(player);
 

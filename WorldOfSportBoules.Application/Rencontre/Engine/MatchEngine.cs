@@ -13,7 +13,7 @@ public sealed class MatchEngine
 
     public void LancerLeBut(Match match, string playerName, Position cible)
     {
-        var player = match.Players.SingleOrDefault(x => x.Name == playerName);
+        var player = match.Players.SingleOrDefault(x => x.FullName == playerName);
 
         if (player is null)
             throw new InvalidOperationException(

@@ -1,4 +1,5 @@
-﻿using WorldOfSportBoules.Application.Rencontre.Domain;
+﻿using WorldOfSportBoules.Application._Shared.Domain;
+using WorldOfSportBoules.Application.Rencontre.Domain;
 
 namespace WorldOfSportBoules.Application.Rencontre.Engine;
 
