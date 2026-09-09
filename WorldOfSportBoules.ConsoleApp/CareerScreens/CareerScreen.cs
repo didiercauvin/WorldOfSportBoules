@@ -31,6 +31,8 @@ public sealed class CareerScreen
         _prepareSeasonHandler;
     private readonly StartCompetitionHandler _startCompetitionHandler;
     private readonly SimulateMatchHandler _simulateMatchHandler;
+    private readonly SeasonScreen _seasonScreen;
+    private readonly CompetitionPathScreen _competitionPathScreen;
 
     public CareerScreen(
         GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
@@ -40,7 +42,10 @@ public sealed class CareerScreen
         SelectCompetitionScreen selectCompetitionScreen,
         TournamentScreen tournamentScreen,
         StartCompetitionHandler startCompetitionHandler,
-        SimulateMatchHandler simulateMatchHandler)
+        SimulateMatchHandler simulateMatchHandler,
+        SeasonScreen seasonScreen,
+        CompetitionPathScreen competitionPathScreen
+        )
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
@@ -54,6 +59,8 @@ public sealed class CareerScreen
         _tournamentScreen = tournamentScreen;
         _startCompetitionHandler = startCompetitionHandler;
         _simulateMatchHandler = simulateMatchHandler;
+        _seasonScreen = seasonScreen;
+        _competitionPathScreen = competitionPathScreen;
     }
 
     public void Run(Career career)
@@ -362,8 +369,68 @@ public sealed class CareerScreen
                 break;
 
             case "Ma saison":
-                _currentScreen = "Ma saison";
-                break;
+                _seasonScreen.Initialize();
+
+                while (true)
+                {
+                    AnsiConsole.Clear();
+
+                    AnsiConsole.Write(
+                        _seasonScreen.Render(career));
+
+                    var key = System.Console.ReadKey(true).Key;
+
+                    switch (key)
+                    {
+                        case ConsoleKey.UpArrow:
+                            _seasonScreen.MoveUp(career);
+                            break;
+
+                        case ConsoleKey.DownArrow:
+                            _seasonScreen.MoveDown(career);
+                            break;
+
+                        case ConsoleKey.Enter:
+                            {
+                                var competition =
+                                    _seasonScreen.GetSelectedCompetition(career);
+
+                                if (competition is null)
+                                    break;
+
+                                var participation =
+                                    career.CurrentSeason?
+                                        .Participations
+                                        .FirstOrDefault(x =>
+                                            x.Competition.Id ==
+                                            competition.Id);
+
+                                if (participation is null)
+                                    break;
+
+                                while (true)
+                                {
+                                    AnsiConsole.Clear();
+
+                                    AnsiConsole.Write(
+                                        _competitionPathScreen.Render(
+                                            participation,
+                                            career.Team));
+
+                                    var detailKey =
+                                        System.Console.ReadKey(true).Key;
+
+                                    if (detailKey == ConsoleKey.Escape)
+                                        break;
+                                }
+
+                                break;
+                            }
+
+                        case ConsoleKey.Escape:
+                            return;
+                    }
+                }
 
             case "Concours":
                 

@@ -46,4 +46,27 @@ public sealed class CompetitionParticipation
                    Tournament.HasLost(Team);
         }
     }
+
+    public CompetitionRound? EliminatedAt
+    {
+        get
+        {
+            if (Tournament is null)
+                return null;
+
+            var match = Tournament.Rounds
+                .SelectMany(x => x.Matches)
+                .FirstOrDefault(x =>
+                    x.IsPlayed &&
+                    (x.Team1.Id == Team.Id ||
+                     x.Team2.Id == Team.Id) &&
+                    x.Winner?.Id != Team.Id);
+
+            return match is null
+                ? null
+                : Tournament.Rounds
+                    .First(x => x.Matches.Contains(match))
+                    .Round;
+        }
+    }
 }

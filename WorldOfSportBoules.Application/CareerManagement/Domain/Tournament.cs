@@ -54,6 +54,19 @@ public sealed class Tournament
                 x.Team2.Id == team.Id);
     }
 
+    public IReadOnlyList<TournamentMatch> GetTeamMatches(
+    Team team)
+    {
+        ArgumentNullException.ThrowIfNull(team);
+
+        return Rounds
+            .SelectMany(x => x.Matches)
+            .Where(x =>
+                x.Team1.Id == team.Id ||
+                x.Team2.Id == team.Id)
+            .ToList();
+    }
+
     public bool IsCurrentRoundFinished =>
         CurrentRound.Matches.All(x => x.IsPlayed);
 

@@ -45,6 +45,11 @@ var selectCompetitionScreen = new SelectCompetitionScreen();
 var tournamentScreen = new TournamentScreen();
 var startCompetitionHandler = new StartCompetitionHandler(teamProvider);
 var simulateMatchHandler = new SimulateMatchHandler();
+var seasonScreen =
+    new SeasonScreen();
+
+var competitionPathScreen =
+    new CompetitionPathScreen();
 
 var careerScreen =
     new CareerScreen(
@@ -55,7 +60,9 @@ var careerScreen =
         selectCompetitionScreen,
         tournamentScreen,
         startCompetitionHandler,
-        simulateMatchHandler);
+        simulateMatchHandler,
+        seasonScreen,
+        competitionPathScreen);
 
 while (true)
 {
