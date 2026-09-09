@@ -392,20 +392,20 @@ public sealed class CareerScreen
 
                         case ConsoleKey.Enter:
                             {
-                                var competition =
+                                var compet =
                                     _seasonScreen.GetSelectedCompetition(career);
 
-                                if (competition is null)
+                                if (compet is null)
                                     break;
 
-                                var participation =
+                                var part =
                                     career.CurrentSeason?
                                         .Participations
                                         .FirstOrDefault(x =>
                                             x.Competition.Id ==
-                                            competition.Id);
+                                            compet.Id);
 
-                                if (participation is null)
+                                if (part is null)
                                     break;
 
                                 while (true)
@@ -414,7 +414,7 @@ public sealed class CareerScreen
 
                                     AnsiConsole.Write(
                                         _competitionPathScreen.Render(
-                                            participation,
+                                            part,
                                             career.Team));
 
                                     var detailKey =
@@ -433,69 +433,58 @@ public sealed class CareerScreen
                 }
 
             case "Concours":
-                
-                    _selectCompetitionScreen.Initialize(career);
+
+                var season = career.CurrentSeason;
+
+                if (season is null)
+                {
+                    AnsiConsole.Clear();
+
+                    AnsiConsole.MarkupLine(
+                        "[yellow]Aucune saison n'est en cours.[/]");
+
+                    AnsiConsole.MarkupLine(
+                        "\n[grey]Entrée : continuer[/]");
+
+                    Console.ReadKey(true);
+
+                    break;
+                }
+
+                var competition = season.NextCompetition;
+
+                if (competition is null)
+                {
+                    AnsiConsole.Clear();
+
+                    AnsiConsole.MarkupLine(
+                        "[green]Tous les concours de la saison ont été terminés.[/]");
+
+                    AnsiConsole.MarkupLine(
+                        "\n[grey]Entrée / Échap : retour[/]");
 
                     while (true)
                     {
-                        AnsiConsole.Clear();
-
-                        AnsiConsole.Write(
-                            _selectCompetitionScreen.Render(career));
-
                         var key = Console.ReadKey(true).Key;
 
-                        switch (key)
-                        {
-                            case ConsoleKey.UpArrow:
-                                _selectCompetitionScreen.MoveUp(career);
-                                break;
-
-                            case ConsoleKey.DownArrow:
-                                _selectCompetitionScreen.MoveDown(career);
-                                break;
-
-                            case ConsoleKey.Enter:
-                                {
-                                    var competition =
-                                        _selectCompetitionScreen
-                                            .GetSelectedCompetition(career);
-
-                                    if (competition is null)
-                                        break;
-
-                                    try
-                                    {
-                                        var participation =
-                                            _startCompetitionHandler.Handle(
-                                                new StartCompetitionCommand(
-                                                    competition.Id),
-                                                career);
-
-                                        _currentParticipation = participation;
-
-                                        RunTournament(
-                                            participation,
-                                            career);
-                                    }
-                                    catch (InvalidOperationException ex)
-                                    {
-                                        AnsiConsole.MarkupLine(
-                                            $"[red]{ex.Message}[/]");
-
-                                        Console.ReadKey(true);
-                                    }
-
-                                    break;
-                                }
-
-                            case ConsoleKey.Escape:
-                                return;
-                        }
-
-                        // Après le retour du tournoi, on revient
-                        // à la sélection des concours.
+                        if (key is ConsoleKey.Enter or ConsoleKey.Escape)
+                            break;
                     }
+
+                    break;
+                }
+
+                var participation =
+                    _startCompetitionHandler.Handle(
+                        new StartCompetitionCommand(
+                            competition.Id),
+                        career);
+
+                RunTournament(
+                    participation,
+                    career);
+
+                break;
 
             case "Budget":
                 break;
