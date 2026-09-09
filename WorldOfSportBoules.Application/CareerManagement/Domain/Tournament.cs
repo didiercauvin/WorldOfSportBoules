@@ -14,29 +14,88 @@ public sealed class Tournament
     public IReadOnlyList<TournamentRound> Rounds =>
         _rounds;
 
-    public bool IsFinished =>
-        _rounds.Last().IsPlayed;
-
-    public bool HasLost =>
-        _rounds.Any(x =>
-            x.IsPlayed &&
-            !x.Result!.IsVictory);
-
-    public TournamentRound? NextRound =>
-        _rounds.FirstOrDefault(x => !x.IsPlayed);
-
     public Tournament(
-        CompetitionRound firstRound)
+    CompetitionRound firstRound,
+    IReadOnlyList<Team> teams)
     {
-        var rounds = GetRoundsFrom(firstRound);
+        ArgumentNullException.ThrowIfNull(teams);
 
-        _rounds.AddRange(
-            rounds.Select(x => new TournamentRound(x)));
+        var requiredTeamCount =
+            GetRequiredTeamCount(firstRound);
+
+        if (teams.Count != requiredTeamCount)
+        {
+            throw new ArgumentException(
+                $"Le tour {firstRound} nécessite " +
+                $"{requiredTeamCount} équipes.",
+                nameof(teams));
+        }
+
+        var drawnTeams = teams.ToList();
+
+        Shuffle(drawnTeams);
+
+        GenerateRound(
+            firstRound,
+            drawnTeams);
     }
 
-    public void PlayNextRound(MatchResult result)
+    public TournamentRound CurrentRound =>
+        _rounds.Last();
+
+    public TournamentMatch? GetTeamMatch(
+        Team team)
     {
-        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(team);
+
+        return CurrentRound.Matches
+            .FirstOrDefault(x =>
+                x.Team1.Id == team.Id ||
+                x.Team2.Id == team.Id);
+    }
+
+    public bool IsCurrentRoundFinished =>
+        CurrentRound.Matches.All(x => x.IsPlayed);
+
+    public bool IsFinished =>
+        CurrentRound.Round == CompetitionRound.Finale &&
+        IsCurrentRoundFinished;
+
+    public bool HasLost(Team team)
+    {
+        ArgumentNullException.ThrowIfNull(team);
+
+        var match = CurrentRound.Matches
+            .FirstOrDefault(x =>
+                x.Team1.Id == team.Id ||
+                x.Team2.Id == team.Id);
+
+        return match is not null &&
+               match.IsPlayed &&
+               match.Winner?.Id != team.Id;
+    }
+
+    public bool HasWon(Team team)
+    {
+        ArgumentNullException.ThrowIfNull(team);
+
+        var match = CurrentRound.Matches
+            .FirstOrDefault(x =>
+                x.Team1.Id == team.Id ||
+                x.Team2.Id == team.Id);
+
+        return match is not null &&
+               match.IsPlayed &&
+               match.Winner?.Id == team.Id;
+    }
+
+    public void GenerateNextRound()
+    {
+        if (!IsCurrentRoundFinished)
+        {
+            throw new InvalidOperationException(
+                "Tous les matchs du tour doivent être terminés.");
+        }
 
         if (IsFinished)
         {
@@ -44,45 +103,106 @@ public sealed class Tournament
                 "Le tournoi est déjà terminé.");
         }
 
-        if (HasLost)
-        {
-            throw new InvalidOperationException(
-                "L'équipe a été éliminée.");
-        }
+        var winners = CurrentRound.Matches
+            .Select(x => x.Winner!)
+            .ToList();
 
-        var nextRound = NextRound;
+        Shuffle(winners);
 
-        if (nextRound is null)
-        {
-            throw new InvalidOperationException(
-                "Il n'y a plus de tour à jouer.");
-        }
-
-        nextRound.SetResult(result);
+        GenerateRound(
+            GetNextRound(CurrentRound.Round),
+            winners);
     }
 
-    private static IReadOnlyList<CompetitionRound> GetRoundsFrom(
-        CompetitionRound firstRound)
+    public void SetMatchResult(
+    TournamentMatch match,
+    MatchResult result)
     {
-        var allRounds = new[]
-        {
-            CompetitionRound.TrenteDeuxiemeDeFinale,
-            CompetitionRound.SeiziemeDeFinale,
-            CompetitionRound.HuitiemeDeFinale,
-            CompetitionRound.QuartDeFinale,
-            CompetitionRound.DemiFinale,
-            CompetitionRound.Finale
-        };
+        ArgumentNullException.ThrowIfNull(match);
+        ArgumentNullException.ThrowIfNull(result);
 
-        var index = Array.IndexOf(allRounds, firstRound);
-
-        if (index < 0)
+        if (!CurrentRound.Matches.Contains(match))
         {
-            throw new ArgumentException(
-                "Le tour initial est invalide.",
-                nameof(firstRound));
+            throw new InvalidOperationException(
+                "Ce match n'appartient pas au tour actuel.");
         }
 
-        return allRounds[index..];
+        match.SetResult(result);
+    }
+
+    private static int GetRequiredTeamCount(
+    CompetitionRound round)
+    {
+        return round switch
+        {
+            CompetitionRound.TrenteDeuxiemeDeFinale => 64,
+            CompetitionRound.SeiziemeDeFinale => 32,
+            CompetitionRound.HuitiemeDeFinale => 16,
+            CompetitionRound.QuartDeFinale => 8,
+            CompetitionRound.DemiFinale => 4,
+            CompetitionRound.Finale => 2,
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(round))
+        };
+    }
+
+    private static void Shuffle(
+    List<Team> teams)
+    {
+        for (var i = teams.Count - 1; i > 0; i--)
+        {
+            var j = Random.Shared.Next(i + 1);
+
+            (teams[i], teams[j]) =
+                (teams[j], teams[i]);
+        }
+    }
+
+    private void GenerateRound(
+        CompetitionRound round,
+        IReadOnlyList<Team> teams)
+    {
+        var tournamentRound =
+            new TournamentRound(round);
+
+        for (var i = 0; i < teams.Count; i += 2)
+        {
+            tournamentRound.AddMatch(
+                new TournamentMatch(
+                    teams[i],
+                    teams[i + 1]));
+        }
+
+        _rounds.Add(tournamentRound);
+    }
+
+    private static CompetitionRound GetNextRound(
+        CompetitionRound round)
+    {
+        return round switch
+        {
+            CompetitionRound.TrenteDeuxiemeDeFinale =>
+                CompetitionRound.SeiziemeDeFinale,
+
+            CompetitionRound.SeiziemeDeFinale =>
+                CompetitionRound.HuitiemeDeFinale,
+
+            CompetitionRound.HuitiemeDeFinale =>
+                CompetitionRound.QuartDeFinale,
+
+            CompetitionRound.QuartDeFinale =>
+                CompetitionRound.DemiFinale,
+
+            CompetitionRound.DemiFinale =>
+                CompetitionRound.Finale,
+
+            CompetitionRound.Finale =>
+                throw new InvalidOperationException(
+                    "La finale est le dernier tour."),
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(round))
+        };
     }
 }

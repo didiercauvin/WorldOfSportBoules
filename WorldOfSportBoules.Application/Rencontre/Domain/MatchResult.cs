@@ -2,27 +2,31 @@
 
 public sealed class MatchResult
 {
-    public int TeamScore { get; }
-    public int OpponentScore { get; }
+    public int Team1Score { get; }
+    public int Team2Score { get; }
 
-    public bool IsVictory =>
-        TeamScore > OpponentScore;
+    public bool IsTeam1Victory =>
+        Team1Score > Team2Score;
 
     public MatchResult(
-        int teamScore,
-        int opponentScore)
+        int team1Score,
+        int team2Score)
     {
-        if (teamScore < 0)
-            throw new ArgumentOutOfRangeException(nameof(teamScore));
+        if (team1Score < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(team1Score));
 
-        if (opponentScore < 0)
-            throw new ArgumentOutOfRangeException(nameof(opponentScore));
+        if (team2Score < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(team2Score));
 
-        if (teamScore == opponentScore)
+        if (team1Score == team2Score)
+        {
             throw new ArgumentException(
                 "Un match ne peut pas se terminer sur une égalité.");
+        }
 
-        TeamScore = teamScore;
-        OpponentScore = opponentScore;
+        Team1Score = team1Score;
+        Team2Score = team2Score;
     }
 }

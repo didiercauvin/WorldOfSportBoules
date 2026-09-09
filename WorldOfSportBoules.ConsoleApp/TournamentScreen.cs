@@ -11,7 +11,8 @@ namespace WorldOfSportBoules.ConsoleApp;
 public sealed class TournamentScreen
 {
     public Panel Render(
-        CompetitionParticipation participation)
+        CompetitionParticipation participation,
+        Team team)
     {
         var competition = participation.Competition;
         var tournament = participation.Tournament;
@@ -37,14 +38,19 @@ public sealed class TournamentScreen
 
         foreach (var round in tournament.Rounds)
         {
-            var status = GetStatus(
-                round,
-                tournament);
+            var match = round.Matches
+                .FirstOrDefault(x =>
+                    x.Team1.Id == team.Id ||
+                    x.Team2.Id == team.Id);
 
-            var result = round.Result is null
+            var status = GetStatus(
+                match,
+                team);
+
+            var result = match?.Result is null
                 ? ""
-                : $"{round.Result.TeamScore} - " +
-                  $"{round.Result.OpponentScore}";
+                : $"{match.Result.Team1Score} - " +
+                  $"{match.Result.Team2Score}";
 
             table.AddRow(
                 GetRoundName(round.Round),
@@ -70,22 +76,22 @@ public sealed class TournamentScreen
     }
 
     private static string GetStatus(
-        TournamentRound round,
-        Tournament tournament)
+    TournamentMatch? match,
+    Team team)
     {
-        if (round.Result is not null)
+        if (match is null)
         {
-            return round.Result.IsVictory
-                ? "[green]✓ Victoire[/]"
-                : "[red]✗ Défaite[/]";
+            return "[grey]○[/]";
         }
 
-        if (tournament.NextRound == round)
+        if (!match.IsPlayed)
         {
             return "[yellow]▶ À jouer[/]";
         }
 
-        return "[grey]○[/]";
+        return match.Winner?.Id == team.Id
+            ? "[green]✓ Victoire[/]"
+            : "[red]✗ Défaite[/]";
     }
 
     private static string GetRoundName(

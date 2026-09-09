@@ -61,9 +61,12 @@ public sealed class Season
     }
 
     public CompetitionParticipation StartCompetition(
-    ScheduledCompetition competition)
+    ScheduledCompetition competition,
+    Team team,
+    IReadOnlyList<Team> teams)
     {
         ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(teams);
 
         if (!_competitions.Any(x => x.Id == competition.Id))
         {
@@ -80,11 +83,52 @@ public sealed class Season
             return existingParticipation;
         }
 
+        var nextCompetition = NextCompetition;
+
+        if (nextCompetition is null)
+        {
+            throw new InvalidOperationException(
+                "Tous les concours de la saison sont terminés.");
+        }
+
+        if (nextCompetition.Id != competition.Id)
+        {
+            throw new InvalidOperationException(
+                $"Le prochain concours est {nextCompetition.Definition.Name}.");
+        }
+
         var participation = new CompetitionParticipation(
-            competition);
+            competition,
+            team,
+            teams);
 
         _participations.Add(participation);
 
         return participation;
+    }
+
+    public ScheduledCompetition? NextCompetition
+    {
+        get
+        {
+            var orderedCompetitions = _competitions
+                .OrderBy(x => x.StartDate)
+                .ToList();
+
+            foreach (var competition in orderedCompetitions)
+            {
+                var participation = _participations
+                    .FirstOrDefault(x =>
+                        x.Competition.Id == competition.Id);
+
+                if (participation is null)
+                    return competition;
+
+                if (!participation.IsFinished)
+                    return competition;
+            }
+
+            return null;
+        }
     }
 }

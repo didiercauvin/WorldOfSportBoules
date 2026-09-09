@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailableCompetitions;
 using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
+using WorldOfSportBoules.Application.CareerManagement.Application.SimulatingMatch;
+using WorldOfSportBoules.Application.CareerManagement.Application.StartingCompetition;
 using WorldOfSportBoules.Application.CareerManagement.Domain;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -27,6 +29,8 @@ public sealed class CareerScreen
 
     private readonly PrepareSeasonHandler
         _prepareSeasonHandler;
+    private readonly StartCompetitionHandler _startCompetitionHandler;
+    private readonly SimulateMatchHandler _simulateMatchHandler;
 
     public CareerScreen(
         GetAvailableCompetitionsHandler getAvailableCompetitionsHandler,
@@ -34,7 +38,9 @@ public sealed class CareerScreen
         ManageTeamScreen manageTeamScreen,
         PrepareSeasonScreen prepareSeasonScreen,
         SelectCompetitionScreen selectCompetitionScreen,
-        TournamentScreen tournamentScreen)
+        TournamentScreen tournamentScreen,
+        StartCompetitionHandler startCompetitionHandler,
+        SimulateMatchHandler simulateMatchHandler)
     {
         _getAvailableCompetitionsHandler =
             getAvailableCompetitionsHandler;
@@ -46,6 +52,8 @@ public sealed class CareerScreen
         _prepareSeasonScreen = prepareSeasonScreen;
         _selectCompetitionScreen = selectCompetitionScreen;
         _tournamentScreen = tournamentScreen;
+        _startCompetitionHandler = startCompetitionHandler;
+        _simulateMatchHandler = simulateMatchHandler;
     }
 
     public void Run(Career career)
@@ -316,7 +324,8 @@ public sealed class CareerScreen
                 _currentParticipation is null
                     ? CreateComingSoonContent("Aucun tournoi.")
                     : _tournamentScreen.Render(
-                        _currentParticipation),
+                        _currentParticipation,
+                        career.Team),
 
             "Budget" =>
                 CreateComingSoonContent("Budget"),
@@ -357,15 +366,190 @@ public sealed class CareerScreen
                 break;
 
             case "Concours":
-                _selectCompetitionScreen.Initialize(career);
-                _currentScreen = "Concours";
-                break;
+                
+                    _selectCompetitionScreen.Initialize(career);
+
+                    while (true)
+                    {
+                        AnsiConsole.Clear();
+
+                        AnsiConsole.Write(
+                            _selectCompetitionScreen.Render(career));
+
+                        var key = Console.ReadKey(true).Key;
+
+                        switch (key)
+                        {
+                            case ConsoleKey.UpArrow:
+                                _selectCompetitionScreen.MoveUp(career);
+                                break;
+
+                            case ConsoleKey.DownArrow:
+                                _selectCompetitionScreen.MoveDown(career);
+                                break;
+
+                            case ConsoleKey.Enter:
+                                {
+                                    var competition =
+                                        _selectCompetitionScreen
+                                            .GetSelectedCompetition(career);
+
+                                    if (competition is null)
+                                        break;
+
+                                    try
+                                    {
+                                        var participation =
+                                            _startCompetitionHandler.Handle(
+                                                new StartCompetitionCommand(
+                                                    competition.Id),
+                                                career);
+
+                                        _currentParticipation = participation;
+
+                                        RunTournament(
+                                            participation,
+                                            career);
+                                    }
+                                    catch (InvalidOperationException ex)
+                                    {
+                                        AnsiConsole.MarkupLine(
+                                            $"[red]{ex.Message}[/]");
+
+                                        Console.ReadKey(true);
+                                    }
+
+                                    break;
+                                }
+
+                            case ConsoleKey.Escape:
+                                return;
+                        }
+
+                        // Après le retour du tournoi, on revient
+                        // à la sélection des concours.
+                    }
 
             case "Budget":
                 break;
 
             case "Recrutement":
                 break;
+        }
+    }
+
+    private void RunTournament(
+    CompetitionParticipation participation,
+    Career career)
+    {
+        while (true)
+        {
+            AnsiConsole.Clear();
+
+            AnsiConsole.Write(
+                _tournamentScreen.Render(
+                    participation,
+                    career.Team));
+
+            var key = Console.ReadKey(true).Key;
+
+            if (key == ConsoleKey.Escape)
+            {
+                if (participation.IsFinished)
+                {
+                    return;
+                }
+
+                // Concours en cours : impossible de quitter.
+                continue;
+            }
+
+            if (key != ConsoleKey.Enter)
+            {
+                continue;
+            }
+
+            var tournament = participation.Tournament;
+
+            if (tournament is null ||
+                tournament.IsCurrentRoundFinished)
+            {
+                continue;
+            }
+
+            SimulateCurrentRound(
+                tournament,
+                career.Team);
+
+            ShowMatchResult(
+                tournament,
+                career.Team);
+
+            if (tournament.HasLost(career.Team))
+            {
+                continue;
+            }
+
+            if (tournament.IsFinished)
+            {
+                continue;
+            }
+
+            tournament.GenerateNextRound();
+        }
+    }
+
+    private static void ShowMatchResult(
+    Tournament tournament,
+    Team team)
+    {
+        var match = tournament.GetTeamMatch(team);
+
+        if (match is null || match.Result is null)
+            return;
+
+        var opponent = match.Team1.Id == team.Id
+            ? match.Team2
+            : match.Team1;
+
+        var score = match.Team1.Id == team.Id
+            ? $"{match.Result.Team1Score} - {match.Result.Team2Score}"
+            : $"{match.Result.Team2Score} - {match.Result.Team1Score}";
+
+        AnsiConsole.Clear();
+
+        var color = match.Winner?.Id == team.Id
+            ? "green"
+            : "red";
+
+        AnsiConsole.MarkupLine(
+            $"[bold]{team.Name}[/] " +
+            $"[grey]vs[/] " +
+            $"[bold]{opponent.Name}[/]");
+
+        AnsiConsole.MarkupLine(
+            $"[{color}]{score}[/]");
+
+        AnsiConsole.MarkupLine(
+            "\n[grey]Entrée : continuer[/]");
+
+        Console.ReadKey(true);
+    }
+
+    private void SimulateCurrentRound(
+    Tournament tournament,
+    Team team)
+    {
+        foreach (var match in tournament.CurrentRound.Matches)
+        {
+            var result = _simulateMatchHandler.Handle(
+                new SimulateMatchCommand(
+                    match.Team1.Id,
+                    match.Team2.Id));
+
+            tournament.SetMatchResult(
+                match,
+                result);
         }
     }
 

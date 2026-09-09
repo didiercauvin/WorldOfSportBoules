@@ -3,6 +3,8 @@ using WorldOfSportBoules.Application.CareerManagement.Application.CreatingCareer
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailableCompetitions;
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailablePlayers;
 using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
+using WorldOfSportBoules.Application.CareerManagement.Application.SimulatingMatch;
+using WorldOfSportBoules.Application.CareerManagement.Application.StartingCompetition;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Competitions;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players;
 using WorldOfSportBoules.ConsoleApp;
@@ -10,6 +12,7 @@ using WorldOfSportBoules.ConsoleApp.CareerScreens;
 
 var competitionProvider = new InMemoryCompetitionProvider();
 var playerProvider = new InMemoryPlayerProvider();
+var teamProvider =  new InMemoryTeamProvider();
 
 var getAvailablePlayersHandler =
     new GetAvailablePlayersHandler(
@@ -40,6 +43,8 @@ var manageTeamScreen =
 
 var selectCompetitionScreen = new SelectCompetitionScreen();
 var tournamentScreen = new TournamentScreen();
+var startCompetitionHandler = new StartCompetitionHandler(teamProvider);
+var simulateMatchHandler = new SimulateMatchHandler();
 
 var careerScreen =
     new CareerScreen(
@@ -48,7 +53,9 @@ var careerScreen =
         manageTeamScreen,
         prepareSeasonScreen,
         selectCompetitionScreen,
-        tournamentScreen);
+        tournamentScreen,
+        startCompetitionHandler,
+        simulateMatchHandler);
 
 while (true)
 {

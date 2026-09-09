@@ -9,28 +9,25 @@ namespace WorldOfSportBoules.Application.CareerManagement.Domain;
 
 public sealed class TournamentRound
 {
+    private readonly List<TournamentMatch> _matches = [];
+
     public CompetitionRound Round { get; }
-    public MatchResult? Result { get; private set; }
 
-    public bool IsPlayed =>
-        Result is not null;
+    public IReadOnlyList<TournamentMatch> Matches =>
+        _matches;
 
-    public TournamentRound(CompetitionRound round)
+    public TournamentRound(
+        CompetitionRound round)
     {
         Round = round;
     }
 
-    public void SetResult(MatchResult result)
+    public void AddMatch(
+        TournamentMatch match)
     {
-        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(match);
 
-        if (IsPlayed)
-        {
-            throw new InvalidOperationException(
-                "Ce tour a déjà été joué.");
-        }
-
-        Result = result;
+        _matches.Add(match);
     }
 }
 
