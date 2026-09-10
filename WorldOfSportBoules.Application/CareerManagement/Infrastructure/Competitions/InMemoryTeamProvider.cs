@@ -17,4 +17,12 @@ public sealed class InMemoryTeamProvider : IProvideTeam
             .Where(x => x.Category == TeamCategory.M4)
             .ToList();
     }
+
+    public IReadOnlyList<Team> GetForCategory(
+    TeamCategory category)
+    {
+        return InMemoryTeamData.Teams
+            .Where(x => x.Category == category)
+            .ToList();
+    }
 }

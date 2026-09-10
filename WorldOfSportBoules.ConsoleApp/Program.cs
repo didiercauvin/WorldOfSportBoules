@@ -7,6 +7,7 @@ using WorldOfSportBoules.Application.CareerManagement.Application.SimulatingMatc
 using WorldOfSportBoules.Application.CareerManagement.Application.StartingCompetition;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Competitions;
 using WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players;
+using WorldOfSportBoules.Application.Competition.CreatingCompetition;
 using WorldOfSportBoules.ConsoleApp;
 using WorldOfSportBoules.ConsoleApp.CareerScreens;
 
@@ -51,6 +52,14 @@ var seasonScreen =
 var competitionPathScreen =
     new CompetitionPathScreen();
 
+var createCompetitionHandler =
+    new CreateCompetitionHandler(teamProvider);
+
+var createCompetitionScreen =
+    new CreateCompetitionScreen(
+        createCompetitionHandler,
+        teamProvider);
+
 var careerScreen =
     new CareerScreen(
         getAvailableCompetitionsHandler,
@@ -73,6 +82,7 @@ while (true)
             .Title("[bold]Sport Boules Manager[/]")
             .AddChoices(
                 "Nouvelle carrière",
+                "Créer son concours",
                 "Quitter"));
 
     switch (choice)
@@ -82,6 +92,21 @@ while (true)
                 var career = createCareerScreen.Run();
 
                 careerScreen.Run(career);
+
+                break;
+            }
+
+        case "Créer son concours":
+            {
+                var competition =
+                    createCompetitionScreen.Run();
+
+                if (competition is not null)
+                {
+                    careerScreen.RunTournament(
+                        competition.Tournament,
+                        competition.PlayerTeam);
+                }
 
                 break;
             }

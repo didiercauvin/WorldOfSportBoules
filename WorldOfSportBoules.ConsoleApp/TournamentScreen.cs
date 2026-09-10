@@ -54,6 +54,46 @@ public sealed class TournamentScreen
         };
     }
 
+    public Panel Render(
+    Tournament tournament,
+    Team team)
+    {
+        ArgumentNullException.ThrowIfNull(tournament);
+        ArgumentNullException.ThrowIfNull(team);
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Tour")
+            .AddColumn("Matchs");
+
+        foreach (var round in tournament.Rounds)
+        {
+            table.AddRow(
+                GetRoundName(round.Round),
+                RenderRound(
+                    round,
+                    team));
+        }
+
+        var nextAction =
+            GetNextAction(
+                tournament,
+                team);
+
+        var content = new Rows(
+            new Markup(
+                $"[bold]{team.Name}[/]\n"),
+            table,
+            new Markup(
+                $"\n{nextAction}"));
+
+        return new Panel(content)
+        {
+            Header = new PanelHeader("[bold]Tournoi[/]"),
+            Border = BoxBorder.Rounded
+        };
+    }
+
     private static string RenderRound(
         TournamentRound round,
         Team team)

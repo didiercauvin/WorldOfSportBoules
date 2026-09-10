@@ -33,8 +33,6 @@ public sealed class Tournament
 
         var drawnTeams = teams.ToList();
 
-        Shuffle(drawnTeams);
-
         GenerateRound(
             firstRound,
             drawnTeams);
@@ -152,6 +150,23 @@ public sealed class Tournament
             CompetitionRound.QuartDeFinale => 8,
             CompetitionRound.DemiFinale => 4,
             CompetitionRound.Finale => 2,
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(round))
+        };
+    }
+
+    private static string GetRoundName(
+    CompetitionRound round)
+    {
+        return round switch
+        {
+            CompetitionRound.TrenteDeuxiemeDeFinale => "1/32ème",
+            CompetitionRound.SeiziemeDeFinale => "1/16ème",
+            CompetitionRound.HuitiemeDeFinale => "1/8ème",
+            CompetitionRound.QuartDeFinale => "1/4",
+            CompetitionRound.DemiFinale => "1/2",
+            CompetitionRound.Finale => "finale",
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(round))

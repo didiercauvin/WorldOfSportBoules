@@ -553,6 +553,64 @@ public sealed class CareerScreen
         }
     }
 
+    public void RunTournament(
+    Tournament tournament,
+    Team team)
+    {
+        while (true)
+        {
+            AnsiConsole.Clear();
+
+            AnsiConsole.Write(
+                _tournamentScreen.Render(
+                    tournament,
+                    team));
+
+            var key =
+                System.Console.ReadKey(true).Key;
+
+            if (key == ConsoleKey.Escape)
+            {
+                if (tournament.IsFinished ||
+                    tournament.HasLost(team))
+                {
+                    return;
+                }
+
+                continue;
+            }
+
+            if (key != ConsoleKey.Enter)
+                continue;
+
+            if (tournament.IsFinished ||
+                tournament.HasLost(team))
+            {
+                continue;
+            }
+
+            if (tournament.IsCurrentRoundFinished)
+            {
+                continue;
+            }
+
+            SimulateCurrentRound(
+                tournament,
+                team);
+
+            ShowRoundResults(
+                tournament);
+
+            if (tournament.HasLost(team))
+                continue;
+
+            if (tournament.IsFinished)
+                continue;
+
+            tournament.GenerateNextRound();
+        }
+    }
+
     private static void ShowRoundResults(
     Tournament tournament)
     {
