@@ -14,59 +14,38 @@ public sealed class TournamentScreen
         CompetitionParticipation participation,
         Team team)
     {
-        var competition = participation.Competition;
         var tournament = participation.Tournament;
 
         if (tournament is null)
         {
             return new Panel(
                 new Markup(
-                    "[yellow]Le format de cette compétition " +
-                    "n'est pas encore disponible.[/]"))
-            {
-                Header = new PanelHeader(
-                    $"[bold]{competition.Definition.Name}[/]"),
-                Border = BoxBorder.Rounded
-            };
+                    "[yellow]Cette compétition ne possède " +
+                    "pas encore de tournoi.[/]"));
         }
 
         var table = new Table()
             .Border(TableBorder.Rounded)
             .AddColumn("Tour")
-            .AddColumn("Statut")
-            .AddColumn("Résultat");
+            .AddColumn("Matchs");
 
         foreach (var round in tournament.Rounds)
         {
-            var match = round.Matches
-                .FirstOrDefault(x =>
-                    x.Team1.Id == team.Id ||
-                    x.Team2.Id == team.Id);
-
-            var status = GetStatus(
-                match,
-                team);
-
-            var result = match?.Result is null
-                ? ""
-                : $"{match.Result.Team1Score} - " +
-                  $"{match.Result.Team2Score}";
-
             table.AddRow(
                 GetRoundName(round.Round),
-                status,
-                result);
+                RenderRound(round, team));
         }
+
+        var nextAction =
+            GetNextAction(tournament, team);
 
         var content = new Rows(
             new Markup(
-                $"[bold]{competition.Definition.Name}[/]\n" +
-                $"{competition.Definition.Location}\n"),
+                $"[bold]{participation.Competition.Definition.Name}[/]\n" +
+                $"{participation.Competition.StartDate:dd/MM/yyyy}\n"),
             table,
             new Markup(
-                "\n[grey]↑ ↓ : déplacer   " +
-                "Entrée : sélectionner   " +
-                "Échap : retour[/]"));
+                $"\n{nextAction}"));
 
         return new Panel(content)
         {
@@ -75,23 +54,89 @@ public sealed class TournamentScreen
         };
     }
 
-    private static string GetStatus(
-    TournamentMatch? match,
-    Team team)
+    private static string RenderRound(
+        TournamentRound round,
+        Team team)
     {
-        if (match is null)
+        var lines = new List<string>();
+
+        foreach (var match in round.Matches)
         {
-            return "[grey]○[/]";
+            var isOurMatch =
+                match.Team1.Id == team.Id ||
+                match.Team2.Id == team.Id;
+
+            var team1 =
+                FormatTeam(
+                    match.Team1,
+                    team);
+
+            var team2 =
+                FormatTeam(
+                    match.Team2,
+                    team);
+
+            if (!match.IsPlayed)
+            {
+                lines.Add(
+                    $"{team1} [grey]vs[/] {team2}");
+
+                continue;
+            }
+
+            var score =
+                $"{match.Result!.Team1Score} - " +
+                $"{match.Result.Team2Score}";
+
+            var result =
+                match.Winner!.Id == team.Id
+                    ? "[green]✓[/]"
+                    : isOurMatch
+                        ? "[red]✗[/]"
+                        : "";
+
+            lines.Add(
+                $"{team1} {score} {team2} {result}");
         }
 
-        if (!match.IsPlayed)
+        return string.Join(
+            "\n",
+            lines);
+    }
+
+    private static string FormatTeam(
+        Team team,
+        Team ourTeam)
+    {
+        if (team.Id == ourTeam.Id)
+            return $"[bold]{team.Name}[/]";
+
+        return team.Name;
+    }
+
+    private static string GetNextAction(
+        Tournament tournament,
+        Team team)
+    {
+        if (tournament.HasLost(team))
         {
-            return "[yellow]▶ À jouer[/]";
+            return "[red]Éliminé[/]\n" +
+                   "[grey]Échap : retour[/]";
         }
 
-        return match.Winner?.Id == team.Id
-            ? "[green]✓ Victoire[/]"
-            : "[red]✗ Défaite[/]";
+        if (tournament.IsFinished)
+        {
+            return "[green]Vainqueur du concours[/]\n" +
+                   "[grey]Échap : retour[/]";
+        }
+
+        if (!tournament.IsCurrentRoundFinished)
+        {
+            return "[yellow]Entrée : jouer le " +
+                   $"{GetRoundName(tournament.CurrentRound.Round)}[/]";
+        }
+
+        return "[grey]Préparation du prochain tour...[/]";
     }
 
     private static string GetRoundName(
@@ -117,7 +162,8 @@ public sealed class TournamentScreen
             CompetitionRound.Finale =>
                 "Finale",
 
-            _ => round.ToString()
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(round))
         };
     }
 }

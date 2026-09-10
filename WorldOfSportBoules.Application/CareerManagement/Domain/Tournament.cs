@@ -120,8 +120,6 @@ public sealed class Tournament
             .Select(x => x.Winner!)
             .ToList();
 
-        Shuffle(winners);
-
         GenerateRound(
             GetNextRound(CurrentRound.Round),
             winners);
@@ -173,18 +171,22 @@ public sealed class Tournament
     }
 
     private void GenerateRound(
-        CompetitionRound round,
-        IReadOnlyList<Team> teams)
+    CompetitionRound round,
+    IReadOnlyList<Team> teams)
     {
+        var shuffledTeams = teams
+            .OrderBy(_ => Random.Shared.Next())
+            .ToList();
+
         var tournamentRound =
             new TournamentRound(round);
 
-        for (var i = 0; i < teams.Count; i += 2)
+        for (var i = 0; i < shuffledTeams.Count; i += 2)
         {
             tournamentRound.AddMatch(
                 new TournamentMatch(
-                    teams[i],
-                    teams[i + 1]));
+                    shuffledTeams[i],
+                    shuffledTeams[i + 1]));
         }
 
         _rounds.Add(tournamentRound);

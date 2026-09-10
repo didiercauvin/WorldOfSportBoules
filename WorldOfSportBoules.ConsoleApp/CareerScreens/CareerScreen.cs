@@ -537,9 +537,7 @@ public sealed class CareerScreen
                 tournament,
                 career.Team);
 
-            ShowMatchResult(
-                tournament,
-                career.Team);
+            ShowRoundResults(tournament);
 
             if (tournament.HasLost(career.Team))
             {
@@ -553,6 +551,76 @@ public sealed class CareerScreen
 
             tournament.GenerateNextRound();
         }
+    }
+
+    private static void ShowRoundResults(
+    Tournament tournament)
+    {
+        AnsiConsole.Clear();
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Équipe")
+            .AddColumn("Score")
+            .AddColumn("Équipe");
+
+        foreach (var match in tournament.CurrentRound.Matches)
+        {
+            var team1 =
+                match.Team1.Name;
+
+            var team2 =
+                match.Team2.Name;
+
+            var score =
+                $"{match.Result!.Team1Score} - " +
+                $"{match.Result.Team2Score}";
+
+            table.AddRow(
+                team1,
+                score,
+                team2);
+        }
+
+        AnsiConsole.Write(
+            new Panel(table)
+            {
+                Header = new PanelHeader(
+                    $"[bold]{GetRoundName(tournament.CurrentRound.Round)}[/]")
+            });
+
+        AnsiConsole.MarkupLine(
+            "\n[grey]Entrée : continuer[/]");
+
+        System.Console.ReadKey(true);
+    }
+
+    private static string GetRoundName(
+    CompetitionRound round)
+    {
+        return round switch
+        {
+            CompetitionRound.TrenteDeuxiemeDeFinale =>
+                "1/32ème",
+
+            CompetitionRound.SeiziemeDeFinale =>
+                "1/16ème",
+
+            CompetitionRound.HuitiemeDeFinale =>
+                "1/8ème",
+
+            CompetitionRound.QuartDeFinale =>
+                "1/4",
+
+            CompetitionRound.DemiFinale =>
+                "1/2",
+
+            CompetitionRound.Finale =>
+                "Finale",
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(round))
+        };
     }
 
     private static void ShowMatchResult(
