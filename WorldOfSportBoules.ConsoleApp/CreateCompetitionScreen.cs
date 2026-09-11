@@ -916,8 +916,8 @@ public sealed class TeamDetailsRenderer
             table.AddRow(
                 player.FullName,
                 player.Category.ToString(),
-                player.Tir.ToString(),
-                player.Point.ToString());
+                AfficherNote(player.Tir),
+                AfficherNote(player.Point));
         }
 
         var averageTir =
@@ -943,5 +943,13 @@ public sealed class TeamDetailsRenderer
                 $"[bold]Équipe : {team.Name}[/]"),
             Border = BoxBorder.Rounded
         };
+    }
+
+    string AfficherNote(int note)
+    {
+        // Nombre de X pleins (majuscules) sur 5
+        int nbX = (int)Math.Round(note / 20.0);
+
+        return new string('X', nbX) + new string('x', 5 - nbX);
     }
 }
