@@ -41,6 +41,16 @@ public sealed class MatchSimulator
 
             team1Score += mene.Team1Points;
             team2Score += mene.Team2Points;
+
+            if (team1Score > WinningScore)
+            {
+                team1Score = WinningScore;
+            }
+
+            if (team2Score > WinningScore)
+            {
+                team2Score = WinningScore;
+            }
         }
 
         var result =
