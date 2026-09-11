@@ -9,5 +9,5 @@ namespace WorldOfSportBoules.Application.CareerManagement.Domain;
 
 public interface IProvidePlayer
 {
-    IReadOnlyList<Player> GetAll();
+    IReadOnlyList<Player> GetForCategory(TeamCategory category);
 }

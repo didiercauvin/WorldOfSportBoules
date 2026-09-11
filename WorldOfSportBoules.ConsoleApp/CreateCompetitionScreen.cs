@@ -15,15 +15,18 @@ public sealed class CreateCompetitionScreen
     private readonly CreateCompetitionHandler _handler;
     private readonly IProvideTeam _teamProvider;
     private readonly TeamDetailsRenderer _teamDetailsRenderer;
+    private readonly CreateTeamScreen _createTeamScreen;
 
     public CreateCompetitionScreen(
         CreateCompetitionHandler handler,
         IProvideTeam teamProvider,
-        TeamDetailsRenderer teamDetailsRenderer)
+        TeamDetailsRenderer teamDetailsRenderer,
+        CreateTeamScreen createTeamScreen)
     {
         _handler = handler;
         _teamProvider = teamProvider;
         _teamDetailsRenderer = teamDetailsRenderer;
+        _createTeamScreen = createTeamScreen;
     }
 
     public CreatedCompetition? Run()
@@ -38,16 +41,26 @@ public sealed class CreateCompetitionScreen
         if (firstRound is null)
             return null;
 
-        var teams = SelectTeams(
-            category.Value,
-            firstRound.Value);
+        var teams =
+            _teamProvider
+                .GetForCategory(category.Value)
+                .ToList();
 
-        if (teams is null)
-            return null;
-
-        var playerTeam = SelectPlayerTeam(teams);
+        var playerTeam =
+            SelectOrCreatePlayerTeam(
+                category.Value,
+                teams);
 
         if (playerTeam is null)
+            return null;
+
+        var opponents =
+            SelectTeams(
+                category.Value,
+                firstRound.Value,
+                teams);
+
+        if (opponents is null)
             return null;
 
         try
@@ -57,7 +70,7 @@ public sealed class CreateCompetitionScreen
                     new CreateCompetitionCommand(
                         category.Value,
                         firstRound.Value,
-                        teams.Select(x => x.Id).ToList()));
+                        opponents.Select(x => x.Id).ToList()));
 
             return new CreatedCompetition(
                 tournament,
@@ -79,6 +92,37 @@ public sealed class CreateCompetitionScreen
         }
     }
 
+    private Team? SelectOrCreatePlayerTeam(
+    TeamCategory category,
+    IReadOnlyList<Team> teams)
+    {
+        while (true)
+        {
+            AnsiConsole.Clear();
+
+            var choice =
+                AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[bold]Mon équipe[/]")
+                        .AddChoices(
+                            "Choisir une équipe existante",
+                            "Constituer mon équipe",
+                            "Retour"));
+
+            switch (choice)
+            {
+                case "Choisir une équipe existante":
+                    return SelectPlayerTeam(teams);
+
+                case "Constituer mon équipe":
+                    return _createTeamScreen.Run(category);
+
+                case "Retour":
+                    return null;
+            }
+        }
+    }
+
     private static Team? SelectPlayerTeam(
     IReadOnlyList<Team> teams)
     {
@@ -97,21 +141,98 @@ public sealed class CreateCompetitionScreen
             AnsiConsole.MarkupLine(
                 "[grey]Quelle équipe voulez-vous contrôler ?[/]\n");
 
-            for (var i = 0; i < teams.Count; i++)
-            {
-                var cursor =
-                    i == selectedIndex
-                        ? "[yellow]❯[/]"
-                        : " ";
+            //for (var i = 0; i < teams.Count; i++)
+            //{
+            //    var cursor =
+            //        i == selectedIndex
+            //            ? "[yellow]❯[/]"
+            //            : " ";
 
-                AnsiConsole.MarkupLine(
-                    $"{cursor} {teams[i].Name}");
+            //    AnsiConsole.MarkupLine(
+            //        $"{cursor} {teams[i].Name}");
+            //}
+
+            var grid = new Table()
+                .NoBorder()
+                .AddColumn("")
+                .AddColumn("")
+                .AddColumn("")
+                .AddColumn("")
+                .AddColumn("")
+                .AddColumn("");
+            
+            const int columns = 6;
+            const int rows = 10;
+            const int pageSize = columns * rows; 
+            
+            var currentPage =
+                selectedIndex / pageSize;
+
+            var pageStart =
+                currentPage * pageSize;
+
+            var pageEnd =
+                Math.Min(
+                    pageStart + pageSize,
+                    teams.Count);
+
+            for (var row = 0; row < rows; row++)
+            {
+                var cells = new List<string>();
+
+                for (var column = 0; column < columns; column++)
+                {
+                    var index =
+                        pageStart +
+                        row * columns +
+                        column;
+
+                    if (index >= pageEnd)
+                    {
+                        cells.Add("");
+                        continue;
+                    }
+
+                    var team = teams[index];
+
+                    var cursor =
+                        index == selectedIndex
+                            ? "[yellow]>[/]"
+                            : " ";
+
+                    cells.Add(
+                        $"{cursor} {team.Name}");
+                }
+
+                grid.AddRow(
+                    cells[0],
+                    cells[1],
+                    cells[2],
+                    cells[3],
+                    cells[4],
+                    cells[5]);
             }
 
-            AnsiConsole.MarkupLine(
-                "\n[grey]↑ ↓ : déplacer   " +
-                "Entrée : choisir   " +
-                "Échap : retour[/]");
+            var totalPages =
+                (int)Math.Ceiling(
+                    teams.Count / (double)pageSize);
+
+            var content = new Rows(
+                grid,
+                new Markup(
+                    $"\n[grey]Page {currentPage + 1}/{totalPages}[/]"),
+                new Markup(
+                    "\n[grey]↑ ↓ : déplacer   " +
+                    "PgUp/PgDn : changer de page   " +
+                    "Entrée : choisir   " +
+                    "Échap : retour[/]")
+            );
+
+            AnsiConsole.Write(
+                new Panel(content)
+                {
+                    Border = BoxBorder.Rounded
+                });
 
             var key =
                 System.Console.ReadKey(true).Key;
@@ -119,18 +240,151 @@ public sealed class CreateCompetitionScreen
             switch (key)
             {
                 case ConsoleKey.UpArrow:
-                    selectedIndex =
-                        Math.Max(
-                            0,
-                            selectedIndex - 1);
-                    break;
+                    {
+                        var positionInPage =
+                            selectedIndex - pageStart;
+
+                        var row =
+                            positionInPage / columns;
+
+                        var column =
+                            positionInPage % columns;
+
+                        if (row > 0)
+                        {
+                            selectedIndex -= columns;
+                        }
+                        else if (currentPage > 0)
+                        {
+                            var previousPageStart =
+                                pageStart - pageSize;
+
+                            var previousPageEnd =
+                                Math.Min(
+                                    previousPageStart + pageSize,
+                                    teams.Count);
+
+                            var previousPageItemCount =
+                                previousPageEnd - previousPageStart;
+
+                            var previousColumn =
+                                Math.Min(
+                                    column,
+                                    (previousPageItemCount - 1) % columns);
+
+                            var previousRow =
+                                (previousPageItemCount - 1 - previousColumn)
+                                / columns;
+
+                            selectedIndex =
+                                previousPageStart +
+                                previousRow * columns +
+                                previousColumn;
+                        }
+
+                        break;
+                    }
 
                 case ConsoleKey.DownArrow:
-                    selectedIndex =
-                        Math.Min(
-                            teams.Count - 1,
-                            selectedIndex + 1);
-                    break;
+                    {
+                        var positionInPage =
+                            selectedIndex - pageStart;
+
+                        var row =
+                            positionInPage / columns;
+
+                        var column =
+                            positionInPage % columns;
+
+                        var newIndex =
+                            selectedIndex + columns;
+
+                        if (newIndex < pageEnd)
+                        {
+                            selectedIndex = newIndex;
+                        }
+                        else if (pageEnd < teams.Count)
+                        {
+                            var nextPageStart = pageEnd;
+
+                            var nextPageItemCount =
+                                Math.Min(
+                                    pageSize,
+                                    teams.Count - nextPageStart);
+
+                            var nextColumn =
+                                Math.Min(
+                                    column,
+                                    nextPageItemCount - 1);
+
+                            selectedIndex =
+                                nextPageStart + nextColumn;
+                        }
+
+                        break;
+                    }
+
+                case ConsoleKey.LeftArrow:
+                    {
+                        var positionInPage =
+                            selectedIndex - pageStart;
+
+                        var column =
+                            positionInPage % columns;
+
+                        if (column > 0)
+                        {
+                            selectedIndex--;
+                        }
+
+                        break;
+                    }
+
+                case ConsoleKey.RightArrow:
+                    {
+                        var positionInPage =
+                            selectedIndex - pageStart;
+
+                        var column =
+                            positionInPage % columns;
+
+                        var newIndex =
+                            selectedIndex + 1;
+
+                        if (column < columns - 1 &&
+                            newIndex < pageEnd)
+                        {
+                            selectedIndex = newIndex;
+                        }
+
+                        break;
+                    }
+
+                case ConsoleKey.PageUp:
+                    {
+                        if (currentPage > 0)
+                        {
+                            selectedIndex =
+                                Math.Max(
+                                    0,
+                                    selectedIndex - pageSize);
+                        }
+
+                        break;
+                    }
+
+                case ConsoleKey.PageDown:
+                    {
+                        if (pageEnd < teams.Count)
+                        {
+                            selectedIndex =
+                                Math.Min(
+                                    teams.Count - 1,
+                                    selectedIndex + pageSize);
+                        }
+
+                        break;
+                    }
 
                 case ConsoleKey.Enter:
                     return teams[selectedIndex];
@@ -202,7 +456,7 @@ public sealed class CreateCompetitionScreen
             {
                 var prefix =
                     i == selectedIndex
-                        ? "[yellow]❯[/]"
+                        ? "[yellow]>[/]"
                         : " ";
 
                 AnsiConsole.MarkupLine(
@@ -243,13 +497,9 @@ public sealed class CreateCompetitionScreen
 
     private List<Team>? SelectTeams(
     TeamCategory category,
-    CompetitionRound firstRound)
+    CompetitionRound firstRound,
+    IReadOnlyList<Team> teams)
     {
-        var teams =
-            _teamProvider
-                .GetForCategory(category)
-                .ToList();
-
         var requiredCount =
             GetTeamCount(firstRound);
 

@@ -8,8 +8,7 @@ using WorldOfSportBoules.Application.CareerManagement.Domain;
 
 namespace WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailablePlayers;
 
-public sealed record GetAvailablePlayersQuery(
-    TeamCategory PlayerCategory);
+public sealed record GetAvailablePlayersQuery(TeamCategory PlayerCategory);
 
 public sealed class GetAvailablePlayersHandler
 {
@@ -24,7 +23,7 @@ public sealed class GetAvailablePlayersHandler
     public IReadOnlyList<Player> Handle(
         GetAvailablePlayersQuery query)
     {
-        var players = _playerProvider.GetAll();
+        var players = _playerProvider.GetForCategory(query.PlayerCategory);
 
         return query.PlayerCategory switch
         {

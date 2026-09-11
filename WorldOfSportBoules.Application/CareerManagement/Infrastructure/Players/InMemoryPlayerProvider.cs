@@ -10,8 +10,20 @@ namespace WorldOfSportBoules.Application.CareerManagement.Infrastructure.Players
 
 public sealed class InMemoryPlayerProvider : IProvidePlayer
 {
-    public IReadOnlyList<Player> GetAll()
+    public IReadOnlyList<Player> GetForCategory(TeamCategory category)
     {
-        return InMemoryPlayerData.Players;
+        return category switch
+        {
+            TeamCategory.M4 =>
+                InMemoryPlayerData.Players
+                    .Where(x =>
+                        x.Category is
+                            PlayerCategory.M3 or
+                            PlayerCategory.M4)
+                    .ToList(),
+
+            _ =>
+                InMemoryPlayerData.Players.ToList()
+        };
     }
 }
