@@ -340,7 +340,8 @@ public sealed class CreateCompetitionScreen
             AnsiConsole.MarkupLine(
                 "\n[grey]↑ ↓ ← → : déplacer   " +
                 "Espace : sélectionner   " +
-                "Page précédente/suivante : PgUp/PgDn   " +
+                "R : sélection aléatoire   " +
+                "PgUp/PgDn : changer de page   " +
                 "Entrée : valider   " +
                 "Échap : retour[/]");
 
@@ -531,6 +532,22 @@ public sealed class CreateCompetitionScreen
                             return teams
                                 .Where(x => selected.Contains(x.Id))
                                 .ToList();
+                        }
+
+                        break;
+                    }
+
+                case ConsoleKey.R:
+                    {
+                        selected.Clear();
+
+                        var randomTeams = teams
+                            .OrderBy(_ => Random.Shared.Next())
+                            .Take(requiredCount);
+
+                        foreach (var team in randomTeams)
+                        {
+                            selected.Add(team.Id);
                         }
 
                         break;

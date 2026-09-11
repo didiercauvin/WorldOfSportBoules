@@ -15,48 +15,64 @@ internal static class InMemoryPlayerData
             Guid.Parse("10000000-0000-0000-0000-000000000001"),
             "Jean",
             "Dupont",
-            PlayerCategory.M4),
+            PlayerCategory.M4,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000002"),
             "Michel",
             "Martin",
-            PlayerCategory.M4),
+            PlayerCategory.M4,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000003"),
             "Philippe",
             "Durand",
-            PlayerCategory.M4),
+            PlayerCategory.M4,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000004"),
             "Christophe",
             "Bernard",
-            PlayerCategory.M4),
+            PlayerCategory.M4,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000005"),
             "Laurent",
             "Moreau",
-            PlayerCategory.M4),
+            PlayerCategory.M4,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000006"),
             "Patrick",
             "Robert",
-            PlayerCategory.M3),
+            PlayerCategory.M3,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000007"),
             "Alain",
             "Petit",
-            PlayerCategory.M2),
+            PlayerCategory.M2,
+            50,
+            68),
 
         new(
             Guid.Parse("10000000-0000-0000-0000-000000000008"),
             "Frédéric",
             "Richard",
-            PlayerCategory.M2)
+            PlayerCategory.M2,
+            50,
+            68)
     ];
 }

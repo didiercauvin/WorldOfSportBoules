@@ -18,7 +18,9 @@ public sealed class ScenarioBuilder
             Guid.NewGuid(),
             firstname,
             lastname,
-            PlayerCategory.M4);
+            PlayerCategory.M4,
+            10,
+            10);
 
         _players.Add(player);
 
