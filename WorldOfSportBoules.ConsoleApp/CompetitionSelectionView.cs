@@ -96,7 +96,7 @@ public sealed class CompetitionSelectionView
             var competition = competitions[i];
 
             var cursor = i == index
-                ? "[bold]❯[/]"
+                ? "[bold]>[/]"
                 : " ";
 
             var checkbox = selected.Contains(competition.Id)

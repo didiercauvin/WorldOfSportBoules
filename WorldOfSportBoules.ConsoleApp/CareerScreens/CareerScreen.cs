@@ -281,7 +281,7 @@ public sealed class CareerScreen
             var selected = i == selectedMenuIndex;
 
             var prefix = selected
-                ? "[bold]❯[/] "
+                ? "[bold]>[/] "
                 : "  ";
 
             var item = selected

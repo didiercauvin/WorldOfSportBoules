@@ -175,8 +175,8 @@ public sealed class SeasonScreen
                     return $"[yellow]{round}[/]";
 
                 return match.Winner?.Id == team.Id
-                    ? $"[green]✓ {round}[/]"
-                    : $"[red]✗ {round}[/]";
+                    ? $"[green]V {round}[/]"
+                    : $"[red]X {round}[/]";
             }));
     }
 

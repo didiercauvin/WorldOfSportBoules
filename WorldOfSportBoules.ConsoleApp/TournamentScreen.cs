@@ -130,9 +130,9 @@ public sealed class TournamentScreen
 
             var result =
                 match.Winner!.Id == team.Id
-                    ? "[green]✓[/]"
+                    ? "[green]V[/]"
                     : isOurMatch
-                        ? "[red]✗[/]"
+                        ? "[red]X[/]"
                         : "";
 
             lines.Add(
