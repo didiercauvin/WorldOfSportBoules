@@ -31,64 +31,74 @@ public sealed class CreateCompetitionScreen
 
     public CreatedCompetition? Run()
     {
-        var category = SelectCategory();
-
-        if (category is null)
-            return null;
-
-        var firstRound = SelectFirstRound();
-
-        if (firstRound is null)
-            return null;
-
-        var teams =
-            _teamProvider
-                .GetForCategory(category.Value)
-                .ToList();
-
-        var playerTeam =
-            SelectOrCreatePlayerTeam(
-                category.Value,
-                teams);
-
-        if (playerTeam is null)
-            return null;
-
-        var opponents =
-            SelectTeams(
-                category.Value,
-                firstRound.Value,
-                teams);
-
-        if (opponents is null)
-            return null;
-
-        try
+        while (true)
         {
-            var tournament =
-                _handler.Handle(
-                    new CreateCompetitionCommand(
-                        category.Value,
-                        firstRound.Value,
-                        opponents.Select(x => x.Id).ToList()));
 
-            return new CreatedCompetition(
-                tournament,
-                playerTeam);
-        }
-        catch (Exception exception)
-        {
-            AnsiConsole.Clear();
+            var category = SelectCategory();
 
-            AnsiConsole.MarkupLine(
-                $"[red]{exception.Message}[/]");
+            if (category is null)
+                return null;
 
-            AnsiConsole.MarkupLine(
-                "\n[grey]Entrée : continuer[/]");
+            var teams =
+                _teamProvider
+                    .GetForCategory(category.Value)
+                    .ToList();
 
-            System.Console.ReadKey(true);
+            while (true)
+            {
+                var firstRound = SelectFirstRound();
 
-            return null;
+                if (firstRound is null)
+                    break;
+
+                while (true)
+                {
+                    var playerTeam =
+                        SelectOrCreatePlayerTeam(
+                            category.Value,
+                            teams);
+
+                    if (playerTeam is null)
+                        break;
+
+                    var opponents =
+                        SelectTeams(
+                            category.Value,
+                            firstRound.Value,
+                            teams);
+
+                    if (opponents is null)
+                        continue;
+
+                    try
+                    {
+                        var tournament =
+                            _handler.Handle(
+                                new CreateCompetitionCommand(
+                                    category.Value,
+                                    firstRound.Value,
+                                    opponents.Select(x => x.Id).ToList()));
+
+                        return new CreatedCompetition(
+                            tournament,
+                            playerTeam);
+                    }
+                    catch (Exception exception)
+                    {
+                        AnsiConsole.Clear();
+
+                        AnsiConsole.MarkupLine(
+                            $"[red]{exception.Message}[/]");
+
+                        AnsiConsole.MarkupLine(
+                            "\n[grey]Entrée : continuer[/]");
+
+                        System.Console.ReadKey(true);
+
+                        return null;
+                    }
+                }
+            }
         }
     }
 
@@ -112,10 +122,30 @@ public sealed class CreateCompetitionScreen
             switch (choice)
             {
                 case "Choisir une équipe existante":
-                    return SelectPlayerTeam(teams);
+                    {
+                        var team =
+                            SelectPlayerTeam(teams);
+
+                        if (team is not null)
+                            return team;
+
+                        // Échap dans la liste des équipes :
+                        // on revient ici, sur "Mon équipe".
+                        break;
+                    }
 
                 case "Constituer mon équipe":
-                    return _createTeamScreen.Run(category);
+                    {
+                        var team =
+                            _createTeamScreen.Run(category);
+
+                        if (team is not null)
+                            return team;
+
+                        // Échap dans la constitution :
+                        // on revient ici, sur "Mon équipe".
+                        break;
+                    }
 
                 case "Retour":
                     return null;
@@ -123,7 +153,7 @@ public sealed class CreateCompetitionScreen
         }
     }
 
-    private static Team? SelectPlayerTeam(
+    private Team? SelectPlayerTeam(
     IReadOnlyList<Team> teams)
     {
         var selectedIndex = 0;
@@ -140,17 +170,6 @@ public sealed class CreateCompetitionScreen
 
             AnsiConsole.MarkupLine(
                 "[grey]Quelle équipe voulez-vous contrôler ?[/]\n");
-
-            //for (var i = 0; i < teams.Count; i++)
-            //{
-            //    var cursor =
-            //        i == selectedIndex
-            //            ? "[yellow]❯[/]"
-            //            : " ";
-
-            //    AnsiConsole.MarkupLine(
-            //        $"{cursor} {teams[i].Name}");
-            //}
 
             var grid = new Table()
                 .NoBorder()
@@ -175,6 +194,9 @@ public sealed class CreateCompetitionScreen
                 Math.Min(
                     pageStart + pageSize,
                     teams.Count);
+
+            var currentTeam =
+                teams[selectedIndex];
 
             for (var row = 0; row < rows; row++)
             {
@@ -217,10 +239,14 @@ public sealed class CreateCompetitionScreen
                 (int)Math.Ceiling(
                     teams.Count / (double)pageSize);
 
+            var teamDetails =
+                _teamDetailsRenderer.Render(currentTeam);
+
             var content = new Rows(
                 grid,
                 new Markup(
                     $"\n[grey]Page {currentPage + 1}/{totalPages}[/]"),
+                teamDetails,
                 new Markup(
                     "\n[grey]↑ ↓ : déplacer   " +
                     "PgUp/PgDn : changer de page   " +
@@ -408,7 +434,7 @@ public sealed class CreateCompetitionScreen
                 "[bold]Catégorie[/]\n");
 
             AnsiConsole.MarkupLine(
-                "[yellow]❯ M4[/]");
+                "[yellow]> M4[/]");
 
             AnsiConsole.MarkupLine(
                 "\n[grey]Entrée : continuer   " +
@@ -577,7 +603,7 @@ public sealed class CreateCompetitionScreen
 
                     var cursor =
                         index == selectedIndex
-                            ? "[yellow]❯[/]"
+                            ? "[yellow]>[/]"
                             : " ";
 
                     var checkbox =
