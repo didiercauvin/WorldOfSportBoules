@@ -1,15 +1,9 @@
 ﻿using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WorldOfSportBoules.Application.CareerManagement.Application.GettingAvailableCompetitions;
 using WorldOfSportBoules.Application.CareerManagement.Application.PreparingSeason;
-using WorldOfSportBoules.Application.CareerManagement.Application.SimulatingMatch;
 using WorldOfSportBoules.Application.CareerManagement.Application.StartingCompetition;
 using WorldOfSportBoules.Application.CareerManagement.Domain;
-using static System.Net.Mime.MediaTypeNames;
+using WorldOfSportBoules.Application.Rencontre.Application.SimulatingMatch;
 
 namespace WorldOfSportBoules.ConsoleApp.CareerScreens;
 
@@ -726,12 +720,12 @@ public sealed class CareerScreen
         {
             var result = _simulateMatchHandler.Handle(
                 new SimulateMatchCommand(
-                    match.Team1.Id,
-                    match.Team2.Id));
+                    match.Team1,
+                    match.Team2));
 
             tournament.SetMatchResult(
                 match,
-                result);
+                result.Result);
         }
     }
 
