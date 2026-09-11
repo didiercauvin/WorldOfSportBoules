@@ -14,13 +14,16 @@ public sealed class CreateCompetitionScreen
 {
     private readonly CreateCompetitionHandler _handler;
     private readonly IProvideTeam _teamProvider;
+    private readonly TeamDetailsRenderer _teamDetailsRenderer;
 
     public CreateCompetitionScreen(
         CreateCompetitionHandler handler,
-        IProvideTeam teamProvider)
+        IProvideTeam teamProvider,
+        TeamDetailsRenderer teamDetailsRenderer)
     {
         _handler = handler;
         _teamProvider = teamProvider;
+        _teamDetailsRenderer = teamDetailsRenderer;
     }
 
     public CreatedCompetition? Run()
@@ -286,6 +289,9 @@ public sealed class CreateCompetitionScreen
                     pageStart + pageSize,
                     teams.Count);
 
+            var currentTeam =
+                teams[selectedIndex];
+
             AnsiConsole.Clear();
 
             AnsiConsole.MarkupLine(
@@ -294,10 +300,15 @@ public sealed class CreateCompetitionScreen
                 $"Premier tour : {GetRoundName(firstRound)}\n" +
                 $"Équipes : {selected.Count}/{requiredCount}\n");
 
-            // Grille : 5 lignes × 3 colonnes
+            var grid = new Table()
+                .NoBorder()
+                .AddColumn("")
+                .AddColumn("")
+                .AddColumn("");
+
             for (var row = 0; row < rows; row++)
             {
-                var line = "";
+                var cells = new List<string>();
 
                 for (var column = 0; column < columns; column++)
                 {
@@ -307,7 +318,10 @@ public sealed class CreateCompetitionScreen
                         column;
 
                     if (index >= pageEnd)
+                    {
+                        cells.Add("");
                         continue;
+                    }
 
                     var team = teams[index];
 
@@ -321,29 +335,42 @@ public sealed class CreateCompetitionScreen
                             ? "[green]X[/]"
                             : "[grey] [/]";
 
-                    var text =
-                        $"{cursor} {checkbox} {team.Name}";
-
-                    line += text.PadRight(28);
+                    cells.Add(
+                        $"{cursor} {checkbox} {team.Name}");
                 }
 
-                AnsiConsole.MarkupLine(line);
+                grid.AddRow(
+                    cells[0],
+                    cells[1],
+                    cells[2]);
             }
 
             var totalPages =
                 (int)Math.Ceiling(
                     teams.Count / (double)pageSize);
 
-            AnsiConsole.MarkupLine(
-                $"\n[grey]Page {currentPage + 1}/{totalPages}[/]");
+            var teamDetails =
+                _teamDetailsRenderer.Render(currentTeam);
 
-            AnsiConsole.MarkupLine(
-                "\n[grey]↑ ↓ ← → : déplacer   " +
-                "Espace : sélectionner   " +
-                "R : sélection aléatoire   " +
-                "PgUp/PgDn : changer de page   " +
-                "Entrée : valider   " +
-                "Échap : retour[/]");
+            var content = new Rows(
+                grid,
+                new Markup(
+                    $"\n[grey]Page {currentPage + 1}/{totalPages}[/]"),
+                teamDetails,
+                new Markup(
+                    "\n[grey]↑ ↓ ← → : déplacer   " +
+                    "Espace : sélectionner   " +
+                    "R : sélection aléatoire   " +
+                    "PgUp/PgDn : changer de page   " +
+                    "Entrée : valider   " +
+                    "Échap : retour[/]")
+            );
+
+            AnsiConsole.Write(
+                new Panel(content)
+                {
+                    Border = BoxBorder.Rounded
+                });
 
             var key =
                 System.Console.ReadKey(true).Key;
@@ -361,18 +388,10 @@ public sealed class CreateCompetitionScreen
                         var column =
                             positionInPage % columns;
 
-                        // Monter normalement
                         if (row > 0)
                         {
-                            var newIndex =
-                                selectedIndex - columns;
-
-                            if (newIndex >= pageStart)
-                            {
-                                selectedIndex = newIndex;
-                            }
+                            selectedIndex -= columns;
                         }
-                        // Première ligne : page précédente
                         else if (currentPage > 0)
                         {
                             var previousPageStart =
@@ -415,7 +434,6 @@ public sealed class CreateCompetitionScreen
                         var column =
                             positionInPage % columns;
 
-                        // Descendre normalement
                         var newIndex =
                             selectedIndex + columns;
 
@@ -423,11 +441,9 @@ public sealed class CreateCompetitionScreen
                         {
                             selectedIndex = newIndex;
                         }
-                        // Dernière ligne : page suivante
                         else if (pageEnd < teams.Count)
                         {
-                            var nextPageStart =
-                                pageEnd;
+                            var nextPageStart = pageEnd;
 
                             var nextPageItemCount =
                                 Math.Min(
@@ -525,6 +541,23 @@ public sealed class CreateCompetitionScreen
                         break;
                     }
 
+                case ConsoleKey.R:
+                    {
+                        selected.Clear();
+
+                        var randomTeams =
+                            teams
+                                .OrderBy(_ => Random.Shared.Next())
+                                .Take(requiredCount);
+
+                        foreach (var team in randomTeams)
+                        {
+                            selected.Add(team.Id);
+                        }
+
+                        break;
+                    }
+
                 case ConsoleKey.Enter:
                     {
                         if (selected.Count == requiredCount)
@@ -532,22 +565,6 @@ public sealed class CreateCompetitionScreen
                             return teams
                                 .Where(x => selected.Contains(x.Id))
                                 .ToList();
-                        }
-
-                        break;
-                    }
-
-                case ConsoleKey.R:
-                    {
-                        selected.Clear();
-
-                        var randomTeams = teams
-                            .OrderBy(_ => Random.Shared.Next())
-                            .Take(requiredCount);
-
-                        foreach (var team in randomTeams)
-                        {
-                            selected.Add(team.Id);
                         }
 
                         break;
@@ -601,6 +618,54 @@ public sealed class CreateCompetitionScreen
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(round))
+        };
+    }
+}
+
+public sealed class TeamDetailsRenderer
+{
+    public Panel Render(Team team)
+    {
+        ArgumentNullException.ThrowIfNull(team);
+
+        var table = new Table()
+            .NoBorder()
+            .AddColumn("Joueur")
+            .AddColumn("Cat.")
+            .AddColumn("Tir")
+            .AddColumn("Point");
+
+        foreach (var player in team.Players)
+        {
+            table.AddRow(
+                player.FullName,
+                player.Category.ToString(),
+                player.Tir.ToString(),
+                player.Point.ToString());
+        }
+
+        var averageTir =
+            team.Players.Count == 0
+                ? 0
+                : team.Players.Average(x => x.Tir);
+
+        var averagePoint =
+            team.Players.Count == 0
+                ? 0
+                : team.Players.Average(x => x.Point);
+
+        var content = new Rows(
+            table,
+            new Markup(
+                $"\n[grey]Tir moyen :[/] {averageTir:0.0}    " +
+                $"[grey]Point moyen :[/] {averagePoint:0.0}")
+        );
+
+        return new Panel(content)
+        {
+            Header = new PanelHeader(
+                $"[bold]Équipe : {team.Name}[/]"),
+            Border = BoxBorder.Rounded
         };
     }
 }

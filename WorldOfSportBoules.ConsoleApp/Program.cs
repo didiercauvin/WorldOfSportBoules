@@ -55,10 +55,14 @@ var competitionPathScreen =
 var createCompetitionHandler =
     new CreateCompetitionHandler(teamProvider);
 
+var teamDetailsRenderer =
+    new TeamDetailsRenderer();
+
 var createCompetitionScreen =
     new CreateCompetitionScreen(
         createCompetitionHandler,
-        teamProvider);
+        teamProvider,
+        teamDetailsRenderer);
 
 var careerScreen =
     new CareerScreen(
