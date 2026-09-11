@@ -9,7 +9,8 @@ namespace WorldOfSportBoules.Application.Competition.CreatingCompetition;
 public sealed record CreateCompetitionCommand(
     TeamCategory Category,
     CompetitionRound FirstRound,
-    IReadOnlyList<Guid> TeamIds);
+    IReadOnlyList<Guid> TeamIds,
+    Team PlayerTeam);
 
 public sealed record CreatedCompetition(
     Tournament Tournament,
@@ -38,6 +39,8 @@ public sealed class CreateCompetitionHandler
             availableTeams
                 .Where(x => command.TeamIds.Contains(x.Id))
                 .ToList();
+
+        selectedTeams.Add(command.PlayerTeam);
 
         var requiredTeamCount =
             GetRequiredTeamCount(

@@ -65,7 +65,7 @@ public sealed class CreateCompetitionScreen
                         SelectTeams(
                             category.Value,
                             firstRound.Value,
-                            teams);
+                            teams.Where(x => x.Id != playerTeam.Id).ToList());
 
                     if (opponents is null)
                         continue;
@@ -77,7 +77,8 @@ public sealed class CreateCompetitionScreen
                                 new CreateCompetitionCommand(
                                     category.Value,
                                     firstRound.Value,
-                                    opponents.Select(x => x.Id).ToList()));
+                                    opponents.Select(x => x.Id).ToList(),
+                                    playerTeam));
 
                         return new CreatedCompetition(
                             tournament,
@@ -526,8 +527,7 @@ public sealed class CreateCompetitionScreen
     CompetitionRound firstRound,
     IReadOnlyList<Team> teams)
     {
-        var requiredCount =
-            GetTeamCount(firstRound);
+        var requiredCount = GetTeamCount(firstRound) - 1;
 
         if (teams.Count < requiredCount)
         {
